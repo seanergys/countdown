@@ -30,11 +30,10 @@
 
 #include "cntd.h"
 
-_Bool hwp_usage;
-
 #ifdef HWP_AVAIL
 // Max "Energy_Performance_Preference".
-HIDDEN void set_max_epp() {
+HIDDEN void set_max_epp()
+{
 	int offset;
 	uint64_t pstate;
 
@@ -45,7 +44,8 @@ HIDDEN void set_max_epp() {
 }
 
 // Max "Activity_Window".
-HIDDEN void set_max_aw() {
+HIDDEN void set_max_aw()
+{
 	int offset;
 	uint64_t pstate;
 
@@ -56,7 +56,8 @@ HIDDEN void set_max_aw() {
 }
 
 // Min "Energy_Performance_Preference".
-HIDDEN void set_min_epp() {
+HIDDEN void set_min_epp()
+{
 	int offset;
 	int pstate;
 
@@ -67,7 +68,8 @@ HIDDEN void set_min_epp() {
 }
 
 // Min "Activity_Window".
-HIDDEN void set_min_aw() {
+HIDDEN void set_min_aw()
+{
 	int offset;
 	uint64_t pstate;
 

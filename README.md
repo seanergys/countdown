@@ -1,9 +1,6 @@
-<p align="center">
-<img src="./logo/rgb-cmyk.svg" alt="logo1" width="300"/>
-<img src="./logo/meric.png" alt="logo2" width="200" style="margin-left: 20px;"/>
-</p>
+<img src="./logo/rgb-cmyk.svg" width="400" valign="middle"/>
 
-COUNTDOWN_MERIC - A Run-time Library for Application-agnostic Energy Saving in MPI Communication Primitives
+COUNTDOWN - A Run-time Library for Application-agnostic Energy Saving in MPI Communication Primitives
 ============================================
 
 DISCLAIMER
@@ -13,12 +10,15 @@ See copyright file
 AUTHORS
 -----------
 
+Andrea Monterubbiano <a.monterubbiano@cineca.it> <br>
+Federico Tesser <f.tesser@cineca.it> <br>
+Daniele Cesarini <d.cesarini@cineca.it> <br>
+Andrea Bartolini <a.bartolini@unibo.it> <br>
+Luca Benini <luca.benini@unibo.it> <br>
 
 WEB PAGES
 ---------
 http://github.com/EEESlab/countdown
-
-https://code.it4i.cz/vys0053/meric
 
 Scientific Papers for references
 ---------
@@ -28,7 +28,14 @@ https://ieeexplore.ieee.org/abstract/document/9109637
 
 SUMMARY
 -------
-Countdown-Meric is a unified runtime library that integrates the capabilities of COUNTDOWN and MERIC to optimize energy efficiency in MPI-based High-Performance Computing (HPC) applications.
+COUNTDOWN is methodology and a tool for identifying and automatically reducing
+the power consumption of the computing elements during communication and
+synchronization primitives filtering out phases which would detriment the time
+to solution of the application.
+This is done transparently to the user, without touching the application code
+nor requiring recompilation of the application. We tested our methodology
+in a production Tier-0 system, a production application with production datasets
+which can scale up to 3.5K cores.
 
 
 BUILD REQUIREMENTS
@@ -58,15 +65,11 @@ For example using module envirointment:
 
     module load openmpi
 
-To build COUNTDOWN-MERIC run the following commands:
+To build COUNTDOWN run the following commands:
 
     mkdir build
     cd build
-    cmake -DCNTD_ENABLE_MERIC=ON .. or cmake ..
-
-To build only COUNTDOWN run the following commands:
-
-    cmake -DCNTD_ENABLE_MERIC=OFF .. 
+    cmake ..
 
 Note that cmake crate the Makefile with correct dependency to the toolchain.
 After that, compile with command:
@@ -189,4 +192,3 @@ ACKNOWLEDGMENTS
 ---------------
 Development of the COUNTDOWN has been supported by the EU FETHPC project ANTAREX (g.a. 671623),
 EU project ExaNoDe (g.a. 671578), and CINECA research grant on Energy-Efficient HPC systems.
-These research was partly supported by the EuroHPC EU Regale project (g.a. 956560), the Italian Ministry of Enterprises and Made in Italy ("MIMIT").
