@@ -230,6 +230,42 @@ static void read_energy_tx2mon(double *energy_pkg)
 }
 #endif
 
+/*
+ * The Access Daemon exposes instantaneous power in watts rather than the raw
+ * RAPL counters, so the energy of a sample is the power integrated over the
+ * sampling interval. Its accumulated "Energy" metric is deliberately not used:
+ * it is reported in whole joules and wraps with the underlying 32-bit RAPL
+ * register, and the wrap point is not discoverable through the daemon.
+ *
+ * The daemon has no DRAM domain exposed yet, so DRAM energy is reported as 0.
+ */
+static int read_sys_energy_access_daemon(double *energy_sys,
+					 double energy_pkg[MAX_NUM_SOCKETS],
+					 double energy_dram[MAX_NUM_SOCKETS])
+{
+	access_daemon_values_t power = { 0 };
+	int i;
+
+	*energy_sys = 0.0;
+
+	if (access_daemon_get_socket_power(ACCESS_DAEMON_DEV_ALL, &power) < 0) {
+		fprintf(stderr,
+			"Error: <COUNTDOWN-node:%s-rank:%d> Failed to read the socket power through the Access Daemon: %s\n",
+			cntd->node.hostname, cntd->rank->world_rank,
+			access_daemon_last_error());
+		return -1;
+	}
+
+	for (i = 0; i < cntd->node.num_sockets; i++) {
+		energy_pkg[i] = i < power.count ? (double)power.values[i] *
+							  cntd->sampling_time :
+						  0.0;
+		energy_dram[i] = 0.0;
+	}
+
+	return 0;
+}
+
 static void read_sys_energy(double *energy_sys,
 			    double energy_pkg[MAX_NUM_SOCKETS],
 			    double energy_dram[MAX_NUM_SOCKETS],
@@ -244,6 +280,12 @@ static void read_sys_energy(double *energy_sys,
 #ifdef POWER9
 	static uint64_t energy_gpu_sys_s[2][MAX_NUM_SOCKETS] = { 0 };
 #endif
+
+	if (cntd->use_access_daemon) {
+		read_sys_energy_access_daemon(energy_sys, energy_pkg,
+					      energy_dram);
+		return;
+	}
 
 #ifdef INTEL
 	*energy_sys = 0.0;
@@ -418,7 +460,7 @@ HIDDEN void time_sample_roofline(READ_FORMAT_t (*perf)[MAX_NUM_PERF_EVENTS][2],
 HIDDEN void init_time_sample()
 {
 	if (cntd->iam_master) {
-		if (cntd->enable_power_monitor) {
+		if (cntd->enable_power_monitor && !cntd->use_access_daemon) {
 #if (defined INTEL || defined AMD)
 			init_rapl();
 #elif POWER9
@@ -453,7 +495,7 @@ HIDDEN void finalize_time_sample()
 		// Last sample
 		time_sample(0, NULL, NULL);
 
-		if (cntd->enable_power_monitor) {
+		if (cntd->enable_power_monitor && !cntd->use_access_daemon) {
 #ifdef INTEL
 			finalize_rapl();
 #elif POWER9

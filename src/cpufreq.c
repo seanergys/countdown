@@ -44,8 +44,14 @@ HIDDEN void init_cpufreq()
 		cntd->userspace_governor = 1;
 	cntd->cpuinfo_max_freq = read_int_from_file(CPUINFO_MAX_FREQ);
 	cntd->cpuinfo_min_freq = read_int_from_file(CPUINFO_MIN_FREQ);
-	// I need these files to set the frequency only if I'm not in analysis mode
-	if (!cntd->enable_eam_analysis) {
+	/*
+	 * The frequency files are needed only to set the frequency directly.
+	 * In analysis mode nothing is set, and with the Access Daemon the write
+	 * goes through the daemon instead. The capability values above are
+	 * still read from cpufreq because the daemon exposes no equivalent
+	 * query.
+	 */
+	if (!cntd->enable_eam_analysis && !cntd->use_access_daemon) {
 		snprintf(filename, STRING_SIZE, SCALING_MAX_FREQ,
 			 cntd->rank->cpu_id);
 		cntd->scaling_max_freq_fd = open_file(filename, O_RDWR);
@@ -65,6 +71,9 @@ HIDDEN void init_cpufreq()
 
 HIDDEN void finalize_cpufreq()
 {
+	if (cntd->use_access_daemon)
+		return;
+
 	close(cntd->scaling_max_freq_fd);
 	close(cntd->scaling_min_freq_fd);
 	if (cntd->userspace_governor)
