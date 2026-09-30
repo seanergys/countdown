@@ -67,6 +67,11 @@ option(CNTD_ENABLE_TESTS "Enable the unit-test" ON)
 # MOSQUITTO Options
 option(CNTD_ENABLE_MOSQUITTO "Enable MQTT message passing" OFF)
 
+# SEANERGYS Access Daemon
+option(CNTD_ENABLE_ACCESS_DAEMON
+       "Delegate CPU frequency and power access to the SEANERGYS Access Daemon"
+       OFF)
+
 # HWP/CPUFREQ Options
 option(CNTD_HWP_AUTO_DISCOVER "Find automagically if hwp-states are available"
        ON)

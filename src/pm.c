@@ -77,7 +77,28 @@ HIDDEN void write_msr(int offset, uint64_t value)
 HIDDEN void set_freq(int freq_khz)
 {
 	if (!cntd->enable_eam_analysis) {
-		if (cntd->use_cpufreq) {
+		if (cntd->use_access_daemon) {
+			/*
+			 * The Access Daemon owns the knob, so COUNTDOWN only
+			 * asks for the frequency of the CPU this rank runs on.
+			 *
+			 * TODO: the SET path is untested and blocked by the
+			 * daemon (no reply, wrong metric/CPU index). Aborting
+			 * the whole job on any failure or timeout here is too
+			 * aggressive; decide between abort and degrading.
+			 */
+			if (access_daemon_set_cpu_freq_limit(
+				    cntd->rank->cpu_id, (uint64_t)freq_khz) <
+			    0) {
+				fprintf(stderr,
+					"Error: <COUNTDOWN-node:%s-rank:%d> Failed to set the frequency of CPU %d through the Access Daemon: %s\n",
+					cntd->node.hostname,
+					cntd->rank->world_rank,
+					cntd->rank->cpu_id,
+					access_daemon_last_error());
+				PMPI_Abort(MPI_COMM_WORLD, EXIT_FAILURE);
+			}
+		} else if (cntd->use_cpufreq) {
 			if (cntd->userspace_governor) {
 				if (pwrite(cntd->scaling_setspeed_fd, &freq_khz,
 					   sizeof(freq_khz),
@@ -194,7 +215,9 @@ HIDDEN int get_maximum_turbo_frequency()
 
 	if (!cntd->enable_eam_analysis) {
 #ifdef INTEL
-		if (!cntd->use_cpufreq) {
+		// With the Access Daemon the MSRs are not opened, so the
+		// capability is read from cpufreq instead
+		if (!cntd->use_cpufreq && !cntd->use_access_daemon) {
 			int offset = MSR_TURBO_RATIO_LIMIT;
 			if (cntd->hwp_usage)
 				offset = IA32_HWP_CAPABILITIES;
@@ -257,6 +280,11 @@ HIDDEN int get_minimum_frequency()
 
 HIDDEN void pm_init()
 {
+	if (cntd->use_access_daemon) {
+		// The Access Daemon owns the hardware, no MSR is opened here
+		return;
+	}
+
 	if (!cntd->enable_eam_analysis && !cntd->use_cpufreq) {
 #if (defined INTEL || defined AMD)
 		int world_rank, errno, cpu_id;
@@ -308,6 +336,9 @@ HIDDEN void pm_init()
 HIDDEN void pm_finalize()
 {
 	set_sys_max_freq();
+
+	if (cntd->use_access_daemon)
+		return;
 
 #if (defined INTEL || defined AMD)
 	if (!cntd->use_cpufreq)

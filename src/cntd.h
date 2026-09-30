@@ -66,6 +66,8 @@
 #include "common_def.h"
 // CNTD MPI Definitions
 #include "cntd_mpi_def.h"
+// SEANERGYS Access Daemon client
+#include "access_daemon.h"
 
 // General configurations
 #define MAX_SAMPLING_TIME_REPORT 600 // 600 seconds (10 min)
@@ -265,6 +267,7 @@ typedef struct {
 	char tmp_dir[STRING_SIZE];
 
 	unsigned int use_cpufreq : 1;
+	unsigned int use_access_daemon : 1;
 	unsigned int force_msr : 1;
 	unsigned int enable_eam : 1;
 	unsigned int enable_eam_slack : 1;

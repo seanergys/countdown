@@ -29,6 +29,7 @@
 
 # Source files
 set(SOURCES
+	access_daemon.c
 	arch.c
 	cpufreq.c
 	init.c
@@ -104,6 +105,21 @@ if(CNTD_ENABLE_ACCESSORY_MPI)
 	target_compile_definitions(cntd
 										PRIVATE
 										"ENABLE_ACCESSORY_MPI")
+endif()
+
+# # # # # # # # # # # # # ##############################################
+# SEANERGYS Access Daemon
+# # # # # # # # # # # # # ##############################################
+if(CNTD_ENABLE_ACCESS_DAEMON)
+	find_package(PkgConfig REQUIRED)
+	pkg_check_modules(SEANERBUS_C REQUIRED IMPORTED_TARGET seanerbus-c)
+
+	target_compile_definitions(cntd
+										PRIVATE
+										"ACCESS_DAEMON_ENABLED")
+	target_link_libraries(cntd
+										PRIVATE
+										PkgConfig::SEANERBUS_C)
 endif()
 
 if(CNTD_DISABLE_ALL_MPI_EXCEPT_INI_FIN)
