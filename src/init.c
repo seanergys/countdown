@@ -277,12 +277,11 @@ static void init_masters_shmem()
 
 	cntd->rank->world_size = world_size;
 	cntd->rank->local_size = local_size;
+	cntd->rank->world_rank = world_rank;
+	cntd->rank->local_rank = local_rank;
 
 	PMPI_Barrier(MPI_COMM_WORLD);
 
-	// TODO: the loop below reads cntd->rank->local_rank, which is only assigned
-	// at the end of this function. Likely wrong with 2+ ranks per node: rank >= 1
-	// may skip local_ranks[0] instead of its own slot. Not reproduced yet, verify.
 	// Get shared memory for other local tasks
 	for (int i = 0; i < cntd->rank->local_size; i++) {
 		if (i == cntd->rank->local_rank)
@@ -293,9 +292,6 @@ static void init_masters_shmem()
 			cntd->local_ranks[i] = get_shmem_cpu(shmem_name, 1);
 		}
 	}
-
-	cntd->rank->world_rank = world_rank;
-	cntd->rank->local_rank = local_rank;
 }
 
 static void finalize_shmem()
