@@ -51,9 +51,6 @@
  * (Domain/Metric/Device/Device_no) instead of the lowercase keys used here;
  * (c) the cpu_freq driver registers its actuator under metric Power and
  * indexes CPUs with the device enum. Re-check all of this before relying on it.
- * TODO: the code below is written against the pre-rename SeanerBUS C API
- * (seanerbus_address_*). It builds only against the pinned 640f00a snapshot
- * and not against the current seanerbus_entity_* API.
  * TODO: only the read path was validated (2026-09-18, manual, laptop).
 
  * TODO: the Access Daemon README documents a richer text protocol ("met freq
@@ -113,7 +110,7 @@ typedef struct access_daemon_group_s {
 	// Environment variable holding an explicit UUID list, see access_daemon_discover()
 	const char *uuid_env;
 	// Endpoint of every device, indexed by device number
-	seanerbus_address_t *address[ACCESS_DAEMON_MAX_DEVICES];
+	seanerbus_entity_t *address[ACCESS_DAEMON_MAX_DEVICES];
 	int count;
 	int discovered;
 } access_daemon_group_t;
@@ -147,7 +144,7 @@ typedef struct access_daemon_pending_s {
 	int done;
 	int failed;
 	// Filled by the resolve callback
-	seanerbus_address_t *address;
+	seanerbus_entity_t *address;
 	int address_count;
 	// Filled by the request callback
 	uint64_t value;
@@ -227,10 +224,12 @@ static int access_daemon_pump(access_daemon_pending_t *pending,
 	return pending->failed ? -1 : 0;
 }
 
-static void access_daemon_resolve_cb(
-	seanerbus_connection_t *conn, seanerbus_status_t status,
-	const seanerbus_address_t *const *addresses, size_t address_count,
-	const seanerbus_error_t *error, void *user_data)
+static void access_daemon_resolve_cb(seanerbus_connection_t *conn,
+				     seanerbus_status_t status,
+				     const seanerbus_entity_t *const *addresses,
+				     size_t address_count,
+				     const seanerbus_error_t *error,
+				     void *user_data)
 {
 	access_daemon_pending_t *pending = (access_daemon_pending_t *)user_data;
 	seanerbus_error_t *local_error = NULL;
@@ -253,10 +252,10 @@ static void access_daemon_resolve_cb(
 		return;
 
 	// Addresses are borrowed, so keep an owned copy of the first match
-	if (seanerbus_address_clone(addresses[0], &pending->address,
-				    &local_error) != SEANERBUS_STATUS_OK) {
+	if (seanerbus_entity_clone(addresses[0], &pending->address,
+				   &local_error) != SEANERBUS_STATUS_OK) {
 		pending->failed = 1;
-		access_daemon_store_error("seanerbus_address_clone",
+		access_daemon_store_error("seanerbus_entity_clone",
 					  SEANERBUS_STATUS_OK, local_error);
 	}
 }
@@ -313,7 +312,7 @@ static void access_daemon_request_cb(seanerbus_connection_t *conn,
  */
 static int access_daemon_resolve(const char *metric, const char *device,
 				 int device_no,
-				 seanerbus_address_t **out_address)
+				 seanerbus_entity_t **out_address)
 {
 	access_daemon_pending_t pending = { 0 };
 	seanerbus_name_entry_t names[3];
@@ -378,7 +377,7 @@ static int access_daemon_discover_from_env(access_daemon_group_t *group)
 
 	cursor = copy;
 	while ((token = strsep(&cursor, ",")) != NULL) {
-		seanerbus_address_t *address = NULL;
+		seanerbus_entity_t *address = NULL;
 		seanerbus_error_t *error = NULL;
 
 		while (*token == ' ')
@@ -394,7 +393,7 @@ static int access_daemon_discover_from_env(access_daemon_group_t *group)
 			return -1;
 		}
 
-		if (seanerbus_address_create_from_string(
+		if (seanerbus_entity_create_from_string(
 			    token, &address, &error) != SEANERBUS_STATUS_OK) {
 			access_daemon_set_error(
 				"%s entry %d ('%s') is not a valid UUID: %s",
@@ -449,7 +448,7 @@ static int access_daemon_discover(access_daemon_group_t *group)
 
 	for (device_no = 0; device_no < ACCESS_DAEMON_MAX_DEVICES;
 	     ++device_no) {
-		seanerbus_address_t *address = NULL;
+		seanerbus_entity_t *address = NULL;
 
 		rv = access_daemon_resolve(group->metric, group->device,
 					   device_no, &address);
@@ -636,7 +635,7 @@ void access_daemon_finalize()
 		access_daemon_group_t *group = access_daemon_groups[g];
 
 		for (i = 0; i < group->count; ++i) {
-			seanerbus_address_destroy(group->address[i]);
+			seanerbus_entity_destroy(group->address[i]);
 			group->address[i] = NULL;
 		}
 		group->count = 0;

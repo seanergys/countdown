@@ -1,49 +1,43 @@
-<img src="./logo/rgb-cmyk.svg" width="400" valign="middle"/>
+<img src="./logo/rgb-cmyk.svg" width="400" valign="middle" alt="COUNTDOWN logo"/>
 
-COUNTDOWN - A Run-time Library for Application-agnostic Energy Saving in MPI Communication Primitives
-============================================
+# COUNTDOWN - A Run-time Library for Application-agnostic Energy Saving in MPI Communication Primitives
 
-DISCLAIMER
-----------
+## DISCLAIMER
+
 See copyright file
 
-AUTHORS
------------
+## AUTHORS
 
-Andrea Monterubbiano <a.monterubbiano@cineca.it> <br>
-Federico Tesser <f.tesser@cineca.it> <br>
-Daniele Cesarini <d.cesarini@cineca.it> <br>
-Andrea Bartolini <a.bartolini@unibo.it> <br>
-Luca Benini <luca.benini@unibo.it> <br>
+Luca Andreetti <l.andreetti@cineca.it> <br> Giuseppe Pagano <g.pagano@cineca.it>
+<br> Andrea Monterubbiano <a.monterubbiano@cineca.it> <br> Federico Tesser
+<f.tesser@cineca.it> <br> Daniele Cesarini <d.cesarini@cineca.it> <br> Andrea
+Bartolini <a.bartolini@unibo.it> <br> Luca Benini <luca.benini@unibo.it> <br>
 
-WEB PAGES
----------
-http://github.com/EEESlab/countdown
+## WEB PAGES
 
-Scientific Papers for references
----------
-https://ieeexplore.ieee.org/abstract/document/9095224 <br>
-https://ieeexplore.ieee.org/abstract/document/9109637
+[COUNTDOWN](http://github.com/EEESlab/countdown)
 
+## Scientific Papers for references
 
-SUMMARY
--------
+- [COUNTDOWN: A Run-Time Library for Performance-Neutral Energy Saving in MPI Applications](https://ieeexplore.ieee.org/abstract/document/9095224)
+- [Countdown Slack: A Run-Time Library to Reduce Energy Footprint in Large-Scale MPI Applications](https://ieeexplore.ieee.org/abstract/document/9109637)
+
+## SUMMARY
+
 COUNTDOWN is methodology and a tool for identifying and automatically reducing
 the power consumption of the computing elements during communication and
 synchronization primitives filtering out phases which would detriment the time
-to solution of the application.
-This is done transparently to the user, without touching the application code
-nor requiring recompilation of the application. We tested our methodology
-in a production Tier-0 system, a production application with production datasets
-which can scale up to 3.5K cores.
+to solution of the application. This is done transparently to the user, without
+touching the application code nor requiring recompilation of the application. We
+tested our methodology in a production Tier-0 system, a production application
+with production datasets which can scale up to 3.5K cores.
 
+## BUILD REQUIREMENTS
 
-BUILD REQUIREMENTS
-------------------
 In order to build the COUNTDOWN the below requirements must be met.
 
-The COUNTDOWN package requires CMAKE 3.0, a compiler toolchain that supports C/FORTRAN
-language and an MPI v3.x library.
+The COUNTDOWN package requires CMAKE 3.0, a compiler toolchain that supports
+C/FORTRAN language and an MPI v3.x library.
 
 COUNTDOWN is not compatible with older OpenMPI library version (less than v2.1)
 
@@ -57,11 +51,10 @@ Example for Centos >=7.x environment:
     sudo yum groupinstall 'Development Tools'
     sudo yum install openmpi
 
+## BUILD INSTRUCTIONS
 
-BUILD INSTRUCTIONS
-------------------
-Before starting to build COUNTDOWN remember to load the toolchain.
-For example using module envirointment:
+Before starting to build COUNTDOWN remember to load the toolchain. For example
+using module envirointment:
 
     module load openmpi
 
@@ -79,8 +72,8 @@ After that, compile with command:
 
 COUNTDOWN assemblies are located in $COUNTDOWN_BUILD/lib directory.
 
-BUILD OPTIONS
-------------------
+## BUILD OPTIONS
+
 COUNTDOWN supports the following build options:
 
     CNTD_ENABLE_CUDA                (Enable the Nvidia GPU monitoring for energy and power consumption)
@@ -93,50 +86,77 @@ Example:
 
     cmake -DCNTD_ENABLE_CUDA=ON ..
 
-RUN REQUIREMENTS
-----------------
+### Baseline MPI tests
+
+With `CNTD_ENABLE_TESTS=ON` (the default), build and run:
+
+    cmake --build build
+    ctest --test-dir build -L baseline --output-on-failure
+
+The one- and two-rank tests preload the actual `libcntd.so`, verify that its
+runtime is initialized, check an MPI collective result, exercise a periodic
+sampling tick, and require a COUNTDOWN report. They disable power monitoring,
+perf counters, Access Daemon use and EAM/EAM Slack actuation, irrespective of
+the invoking shell's settings. They need no privileged hardware access, but
+still use the machine's read-only topology/nominal-frequency discovery. Tests
+run serially because COUNTDOWN's shared-memory names are job/user-scoped; do not
+run another COUNTDOWN job with the same job/user identity concurrently.
+
+`CNTD_ENABLE_ACCESS_DAEMON=ON` requires the current SeanerBUS **Entity** C API.
+For a local installation, expose its pkg-config and runtime library directories,
+for example:
+
+    PKG_CONFIG_PATH="$HOME/opt/seanerbus/lib/pkgconfig" cmake -S . -B build -DCNTD_ENABLE_ACCESS_DAEMON=ON
+    cmake --build build
+    LD_LIBRARY_PATH="$HOME/opt/seanerbus/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}" ctest --test-dir build -L baseline --output-on-failure
+
+An AD-enabled build does not enable daemon use in these baseline tests. They
+establish MPI startup, sampling and reporting only, not working frequency SETs
+or daemon discovery. Existing discovery/SET limitations remain to be addressed.
+
+## RUN REQUIREMENTS
 
 ### MSR-SAFE DRIVER
-For Intel processors where you want to use the frequency optimization,
-the msr-safe kernel driver must be loaded at runtime to
-support user-level read and write of white-listed MSRs. The source
-code for the driver can be found here:
+
+For Intel processors where you want to use the frequency optimization, the
+msr-safe kernel driver must be loaded at runtime to support user-level read and
+write of white-listed MSRs. The source code for the driver can be found here:
 <https://github.com/scalability-llnl/msr-safe>.
 
-Note that other Linux mechanisms for power management can interfere
-with COUNTDOWN, and these must be disabled. We suggest the following:
+Note that other Linux mechanisms for power management can interfere with
+COUNTDOWN, and these must be disabled. We suggest the following:
 
     echo performance | tee /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor
 
-and adding "intel_pstate=passive" to the kernel command line through
-grub2. Remember to reboot the system to apply the changes.
-
+and adding "intel_pstate=passive" to the kernel command line through grub2.
+Remember to reboot the system to apply the changes.
 
 ### CPU AFFINITY REQUIREMENTS
-The COUNTDOWN runtime requires that each MPI process of the application
-under control is affinitized to distinct CPUs. This is a strict
-requirement for the runtime and must be enforced by the MPI launch
-command.
 
+The COUNTDOWN runtime requires that each MPI process of the application under
+control is affinitized to distinct CPUs. This is a strict requirement for the
+runtime and must be enforced by the MPI launch command.
 
 ### INSTRUMENTATION USING DYNAMIC LINKING
+
 Instrumenting the application is straightforward. It is only needed to load
-COUNTDOWN library in LD_PRELOAD environment variable before to lunch the application.
+COUNTDOWN library in LD_PRELOAD environment variable before to lunch the
+application.
 
     export LD_PRELOAD=/path/to/libcntd.so
 
-
 ### RUN EXAMPLES
+
 To profile the application with COUNTDOWN:
 
     export LD_PRELOAD=/path/to/libcntd.so
     mpirun ./$APP
 
-The summary report of COUNTDOWN will be printed to the standar output 
-at the end of the application.
-
+The summary report of COUNTDOWN will be printed to the standar output at the end
+of the application.
 
 ### COUNTDOWN CONFIGURATIONS
+
 COUNTDOWN can be configured setting the following environment variables:
 
     CNTD_ENABLE=[enable/on/yes/true/1, analysis]            (Enable COUNTDOWN algorithm or enable only the analisys of energy-aware MPI)
@@ -155,40 +175,46 @@ COUNTDOWN can be configured setting the following environment variables:
     CNTD_ENABLE_TIMESERIES_REPORT=[enable/on/yes/true/1]    (Enable time-series reports, default sampling time 1s)
 
 ### Perf events
-The perf events are implementation defined; see your CPU manual (for example 
-the Intel Volume 3B documentation or the AMD BIOS and Kernel Developer
-Guide). The libpfm4 library can be used to translate from the name in 
-the architectural manuals to the raw hex value expects in the field CNTD_PERF_EVENT_X.
+
+The perf events are implementation defined; see your CPU manual (for example the
+Intel Volume 3B documentation or the AMD BIOS and Kernel Developer Guide). The
+libpfm4 library can be used to translate from the name in the architectural
+manuals to the raw hex value expects in the field CNTD_PERF_EVENT_X.
 
     https://github.com/wcohen/libpfm4
-    
+
 Or enable the verbose of 'perf stat' to show the config field:
 
     perf stat -vv -e instructions ls
 
 ### IBM Power9
-The HW monitoring of Power9 requires the read access to the On Chip Controller (OCC) kernel driver through the sysfs file: 
+
+The HW monitoring of Power9 requires the read access to the On Chip Controller
+(OCC) kernel driver through the sysfs file:
 
     /sys/firmware/opal/exports/occ_inband_sensors
 
-If it isn't possible to get access to the OCC kernel driver, COUNTDOWN can run without the HW monitoring of the OCC:
+If it isn't possible to get access to the OCC kernel driver, COUNTDOWN can run
+without the HW monitoring of the OCC:
 
     export CNTD_DISABLE_POWER_MONITOR=ON
 
-
 ### Marvell ThunderX2
-The HW monitoring of ThunderX2 requires the access to the tx2mon kernel driver through the sysfs files:
+
+The HW monitoring of ThunderX2 requires the access to the tx2mon kernel driver
+through the sysfs files:
 
     /sys/devices/platform/tx2mon/node0_raw
     /sys/devices/platform/tx2mon/node1_raw
     /sys/devices/platform/tx2mon/socinfo
 
-If it isn't possible to get access to the tx2mon kernel driver, COUNTDOWN can run without the HW monitoring of the ThunderX2:
+If it isn't possible to get access to the tx2mon kernel driver, COUNTDOWN can
+run without the HW monitoring of the ThunderX2:
 
     export CNTD_DISABLE_POWER_MONITOR=ON
 
+## ACKNOWLEDGMENTS
 
-ACKNOWLEDGMENTS
----------------
-Development of the COUNTDOWN has been supported by the EU FETHPC project ANTAREX (g.a. 671623),
-EU project ExaNoDe (g.a. 671578), and CINECA research grant on Energy-Efficient HPC systems.
+Development of the COUNTDOWN has been supported by the EU FETHPC project ANTAREX
+(g.a. 671623), EU project ExaNoDe (g.a. 671578), and CINECA research grant on
+Energy-Efficient HPC systems.
