@@ -5,28 +5,29 @@
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
- *			* Redistributions of source code must retain the above copyright notice, this
- *				list of conditions and the following disclaimer.
+ *			* Redistributions of source code must retain the above
+ *copyright notice, this list of conditions and the following disclaimer.
  *
- *			* Redistributions in binary form must reproduce the above copyright notice,
- *				this list of conditions and the following disclaimer in the documentation
- *				and/or other materials provided with the distribution.
+ *			* Redistributions in binary form must reproduce the
+ *above copyright notice, this list of conditions and the following disclaimer
+ *in the documentation and/or other materials provided with the distribution.
  *
- *			* Neither the name of the copyright holder nor the names of its
- *				contributors may be used to endorse or promote products derived from
- *				this software without specific prior written permission.
+ *			* Neither the name of the copyright holder nor the names
+ *of its contributors may be used to endorse or promote products derived from
+ *this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
- * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
- * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ *ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+ *LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ *CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ *SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ *INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ *CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ *ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ *POSSIBILITY OF SUCH DAMAGE.
+ */
 
 #include "cntd.h"
 
@@ -339,11 +340,11 @@ HIDDEN void read_tsc(uint64_t *tsc)
 	uint64_t a;
 	uint64_t d;
 
-	//call_cpuid();
+	// call_cpuid();
 
 	__asm__ volatile("rdtsc" : "=a"(a), "=d"(d));
 
-	//call_cpuid();
+	// call_cpuid();
 
 	*tsc = (a | (d << 32));
 }
@@ -593,8 +594,9 @@ HIDDEN void time_sample_region(int prev, int curr, int init, double timing[2])
 							->timing_event_sample
 								[START];
 				} else {
-					// Use the previous value as the starting point because
-					// TOT is not updated yet.
+					// Use the previous value as the
+					// starting point because TOT is not
+					// updated yet.
 					time_region[i][MPI][curr] =
 						time_region[i][MPI][prev];
 					time_region[i][MPI][curr] +=
@@ -703,7 +705,7 @@ HIDDEN void time_sample_perf(int prev, int curr, int init)
 
 			read_tsc(&tscs[i][init]);
 
-			//time_sample_roofline(perf, i, init);
+			// time_sample_roofline(perf, i, init);
 #endif
 
 			for (int j = 0; j < MAX_NUM_CUSTOM_PERF; j++)
@@ -728,7 +730,8 @@ HIDDEN void time_sample_perf(int prev, int curr, int init)
 			     sizeof(perf[i][PERF_CYCLES_REF][curr]));
 
 			read_tsc(&tscs[i][curr]);
-			// Compute the difference between the current and previous samples
+			// Compute the difference between the current and
+			// previous samples
 			diff_tsc = diff_overflow(tscs[i][curr], tscs[i][prev],
 						 UINT64_MAX);
 #endif
@@ -744,10 +747,11 @@ HIDDEN void time_sample_perf(int prev, int curr, int init)
 				uint64_t d_raw_count_p;
 				double d_total_p;
 
-				// Compute the difference between the current and previous samples
-				// and store the result in the current sample
-				// considering multiplication factor due to
-				// sub-sampling of the perf events (e.g. multiplexing)
+				// Compute the difference between the current
+				// and previous samples and store the result in
+				// the current sample considering multiplication
+				// factor due to sub-sampling of the perf events
+				// (e.g. multiplexing)
 				time_en_c = perf[i][j][curr].time_enabled;
 				time_run_c = perf[i][j][curr].time_running;
 				if (time_run_c > 0)
@@ -791,7 +795,10 @@ HIDDEN void time_sample_perf(int prev, int curr, int init)
 
 				if (j == PERF_CYCLES) {
 					cntd->local_ranks[i]->tsc[CURR] =
-						diff_tsc; //2400000000 = cntd->nom_freq_mhz * 1000000 * time_sample
+						diff_tsc; // 2400000000 =
+							  // cntd->nom_freq_mhz
+							  // * 1000000 *
+							  // time_sample
 					cntd->local_ranks[i]->load[CURR] =
 						(double)(cntd->local_ranks[i]
 								 ->perf[j + 1]

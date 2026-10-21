@@ -5,28 +5,29 @@
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
- *			* Redistributions of source code must retain the above copyright notice, this
- *				list of conditions and the following disclaimer.
+ *			* Redistributions of source code must retain the above
+ *copyright notice, this list of conditions and the following disclaimer.
  *
- *			* Redistributions in binary form must reproduce the above copyright notice,
- *				this list of conditions and the following disclaimer in the documentation
- *				and/or other materials provided with the distribution.
+ *			* Redistributions in binary form must reproduce the
+ *above copyright notice, this list of conditions and the following disclaimer
+ *in the documentation and/or other materials provided with the distribution.
  *
- *			* Neither the name of the copyright holder nor the names of its
- *				contributors may be used to endorse or promote products derived from
- *				this software without specific prior written permission.
+ *			* Neither the name of the copyright holder nor the names
+ *of its contributors may be used to endorse or promote products derived from
+ *this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
- * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
- * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ *ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+ *LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ *CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ *SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ *INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ *CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ *ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ *POSSIBILITY OF SUCH DAMAGE.
+ */
 
 #include "cntd.h"
 
@@ -823,7 +824,8 @@ HIDDEN void print_final_report()
 		printf("%s", ft_to_string(table));
 		ft_destroy_table(table);
 		if (cntd->enable_power_monitor) {
-			//	printf("##################### ENERGY #########################\n");
+			//	printf("##################### ENERGY
+			// #########################\n");
 			table = ft_create_table();
 			ft_set_cell_prop(table, 0, FT_ANY_COLUMN,
 					 FT_CPROP_ROW_TYPE, FT_ROW_HEADER);
@@ -870,7 +872,8 @@ HIDDEN void print_final_report()
 #endif
 			printf("%s", ft_to_string(table));
 			ft_destroy_table(table);
-			//printf("##################### AVG POWER ######################\n");
+			// printf("##################### AVG POWER
+			// ######################\n");
 			table = ft_create_table();
 			ft_set_cell_prop(table, 0, FT_ANY_COLUMN,
 					 FT_CPROP_ROW_TYPE, FT_ROW_HEADER);
@@ -919,7 +922,8 @@ HIDDEN void print_final_report()
 			ft_destroy_table(table);
 		}
 
-		//printf("################## PERFORMANCE INFO ##################\n");
+		// printf("################## PERFORMANCE INFO
+		// ##################\n");
 		table = ft_create_table();
 		ft_set_cell_prop(table, 0, FT_ANY_COLUMN, FT_CPROP_ROW_TYPE,
 				 FT_ROW_HEADER);
@@ -1461,7 +1465,8 @@ HIDDEN void print_final_report()
 		global_temp /= (double)num_gpus;
 		global_clock /= (double)num_gpus;
 
-		//printf("##################### GPU REPORTING ##################\n");
+		// printf("##################### GPU REPORTING
+		// ##################\n");
 		table = ft_create_table();
 		ft_set_cell_prop(table, 0, FT_ANY_COLUMN, FT_CPROP_ROW_TYPE,
 				 FT_ROW_HEADER);
@@ -1486,7 +1491,8 @@ HIDDEN void print_final_report()
 				global_util, global_util_mem, global_temp,
 				global_clock);
 #endif
-		//printf("##################### MPI TIMING #####################\n");
+		// printf("##################### MPI TIMING
+		// #####################\n");
 		table = ft_create_table();
 		ft_set_cell_prop(table, 0, FT_ANY_COLUMN, FT_CPROP_ROW_TYPE,
 				 FT_ROW_HEADER);
@@ -1510,7 +1516,8 @@ HIDDEN void print_final_report()
 			fprintf(summary_report_fd, ";%.9f;%.9f;%.9f", app_time,
 				mpi_time, app_time + mpi_time);
 
-		//printf("##################### MPI REPORTING ##################\n");
+		// printf("##################### MPI REPORTING
+		// ##################\n");
 		table = ft_create_table();
 		ft_set_cell_prop(table, 0, FT_ANY_COLUMN, FT_CPROP_ROW_TYPE,
 				 FT_ROW_HEADER);
@@ -1875,7 +1882,7 @@ HIDDEN void init_timeseries_report()
 				cntd->local_ranks[i]->world_rank,
 				cntd->local_ranks[i]->cpu_id);
 
-		//for (i = 0; i < cntd->rank->local_size; i++) {
+		// for (i = 0; i < cntd->rank->local_size; i++) {
 		//	fprintf(timeseries_fd, ";rank-%d-cpu-%d-dp_flops_tot",
 		//		cntd->local_ranks[i]->world_rank,
 		//		cntd->local_ranks[i]->cpu_id);
@@ -1977,7 +1984,7 @@ HIDDEN void init_timeseries_report()
 		//}
 
 		//// Linux perf
-		//for (j = 0; j < MAX_NUM_CUSTOM_PERF; j++)
+		// for (j = 0; j < MAX_NUM_CUSTOM_PERF; j++)
 		//	for (i = 0; i < cntd->rank->local_size; i++)
 		//		if (cntd->perf_fd[i][j] > 0)
 		//			fprintf(timeseries_fd,
@@ -2351,51 +2358,51 @@ HIDDEN void print_timeseries_report(double time_curr, double time_prev,
 			time_run_sp_uops_32 + time_run_sp_uops_128 +
 			time_run_sp_uops_256 + time_run_sp_uops_512;
 
-		//fprintf(timeseries_fd, ";%lu", dp_flops_tot);
-		//fprintf(timeseries_fd, ";%lu", dp_flops_64);
-		//fprintf(timeseries_fd, ";%lu", dp_flops_128);
-		//fprintf(timeseries_fd, ";%lu", dp_flops_256);
-		//fprintf(timeseries_fd, ";%lu", dp_flops_512);
-		//fprintf(timeseries_fd, ";%lu(%lu/%lu)", dp_uops_tot,
+		// fprintf(timeseries_fd, ";%lu", dp_flops_tot);
+		// fprintf(timeseries_fd, ";%lu", dp_flops_64);
+		// fprintf(timeseries_fd, ";%lu", dp_flops_128);
+		// fprintf(timeseries_fd, ";%lu", dp_flops_256);
+		// fprintf(timeseries_fd, ";%lu", dp_flops_512);
+		// fprintf(timeseries_fd, ";%lu(%lu/%lu)", dp_uops_tot,
 		//	time_en_dp_uops_tot, time_run_dp_uops_tot);
-		//fprintf(timeseries_fd, ";%lu(%lu/%lu/%lf)", dp_uops_64,
+		// fprintf(timeseries_fd, ";%lu(%lu/%lu/%lf)", dp_uops_64,
 		//	time_en_dp_uops_64, time_run_dp_uops_64,
 		//	time_mul_dp_uops_64);
-		//fprintf(timeseries_fd, ";%lu(%lu/%lu/%lf)", dp_uops_128,
+		// fprintf(timeseries_fd, ";%lu(%lu/%lu/%lf)", dp_uops_128,
 		//	time_en_dp_uops_128, time_run_dp_uops_128,
 		//	time_mul_dp_uops_128);
-		//fprintf(timeseries_fd, ";%lu(%lu/%lu/%lf)", dp_uops_256,
+		// fprintf(timeseries_fd, ";%lu(%lu/%lu/%lf)", dp_uops_256,
 		//	time_en_dp_uops_256, time_run_dp_uops_256,
 		//	time_mul_dp_uops_256);
-		//fprintf(timeseries_fd, ";%lu(%lu/%lu/%lf)", dp_uops_512,
+		// fprintf(timeseries_fd, ";%lu(%lu/%lu/%lf)", dp_uops_512,
 		//	time_en_dp_uops_512, time_run_dp_uops_512,
 		//	time_mul_dp_uops_512);
-		//fprintf(timeseries_fd, ";%lu", sp_flops_tot);
-		//fprintf(timeseries_fd, ";%lu", sp_flops_32);
-		//fprintf(timeseries_fd, ";%lu", sp_flops_128);
-		//fprintf(timeseries_fd, ";%lu", sp_flops_256);
-		//fprintf(timeseries_fd, ";%lu", sp_flops_512);
-		//fprintf(timeseries_fd, ";%lu(%lu/%lu)", sp_uops_tot,
+		// fprintf(timeseries_fd, ";%lu", sp_flops_tot);
+		// fprintf(timeseries_fd, ";%lu", sp_flops_32);
+		// fprintf(timeseries_fd, ";%lu", sp_flops_128);
+		// fprintf(timeseries_fd, ";%lu", sp_flops_256);
+		// fprintf(timeseries_fd, ";%lu", sp_flops_512);
+		// fprintf(timeseries_fd, ";%lu(%lu/%lu)", sp_uops_tot,
 		//	time_en_sp_uops_tot, time_run_sp_uops_tot);
-		//fprintf(timeseries_fd, ";%lu(%lu/%lu/%lf)", sp_uops_32,
+		// fprintf(timeseries_fd, ";%lu(%lu/%lu/%lf)", sp_uops_32,
 		//	time_en_sp_uops_32, time_run_sp_uops_32,
 		//	time_mul_sp_uops_32);
-		//fprintf(timeseries_fd, ";%lu(%lu/%lu/%lf)", sp_uops_128,
+		// fprintf(timeseries_fd, ";%lu(%lu/%lu/%lf)", sp_uops_128,
 		//	time_en_sp_uops_128, time_run_sp_uops_128,
 		//	time_mul_sp_uops_128);
-		//fprintf(timeseries_fd, ";%lu(%lu/%lu/%lf)", sp_uops_256,
+		// fprintf(timeseries_fd, ";%lu(%lu/%lu/%lf)", sp_uops_256,
 		//	time_en_sp_uops_256, time_run_sp_uops_256,
 		//	time_mul_sp_uops_256);
-		//fprintf(timeseries_fd, ";%lu(%lu/%lu/%lf)", sp_uops_512,
+		// fprintf(timeseries_fd, ";%lu(%lu/%lu/%lf)", sp_uops_512,
 		//	time_en_sp_uops_512, time_run_sp_uops_512,
 		//	time_mul_sp_uops_512);
-		//fprintf(timeseries_fd, ";%lu(%lu/%lu)", mem, time_en_mem,
+		// fprintf(timeseries_fd, ";%lu(%lu/%lu)", mem, time_en_mem,
 		//	time_run_mem);
-		//fprintf(timeseries_fd, ";%lu", mem_data);
+		// fprintf(timeseries_fd, ";%lu", mem_data);
 	}
 #endif
 	// Linux perf
-	//for (j = 0; j < MAX_NUM_CUSTOM_PERF; j++) {
+	// for (j = 0; j < MAX_NUM_CUSTOM_PERF; j++) {
 	//	for (i = 0; i < cntd->rank->local_size; i++) {
 	//		if (cntd->perf_fd[i][j] > 0)
 	//			fprintf(timeseries_fd, ";%lu",

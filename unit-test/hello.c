@@ -1,5 +1,5 @@
 // Mpi hello world program
-//#include "mpe_log.h"
+// #include "mpe_log.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <mpi.h>
@@ -15,9 +15,9 @@ int main()
 	MPI_Comm_size(MPI_COMM_WORLD, &size);
 
 	printf("Hello world from rank %d of %d\n", rank, size);
-	int count = 0; 
+	int count = 0;
 	for (unsigned long int i = 0; i < (1E4); i++)
-	;	
+		;
 
 	printf("Hello world from rank %d of %d\n", rank, size);
 	MPI_Finalize();

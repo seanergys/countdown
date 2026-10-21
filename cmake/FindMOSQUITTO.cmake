@@ -7,11 +7,11 @@
 #  MOSQUITTO_LIBRARIES   - List of libraries when using libmosquitto.
 #  MOSQUITTO_FOUND       - True if libmosquitto found.
 
-if (NOT MOSQUITTO_INCLUDE_DIR)
+if(NOT MOSQUITTO_INCLUDE_DIR)
   find_path(MOSQUITTO_INCLUDE_DIR mosquitto.h)
 endif()
 
-if (NOT MOSQUITTO_LIBRARY)
+if(NOT MOSQUITTO_LIBRARY)
   find_library(
     MOSQUITTO_LIBRARY
     NAMES mosquitto)

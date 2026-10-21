@@ -32,7 +32,8 @@ project(
   libcntd
   VERSION 2.0
   DESCRIPTION
-    "COUNTDOWN: A Run-time Library for Application-agnostic Energy Saving in MPI Communication Primitives"
+    "COUNTDOWN: A Run-time Library for Application-agnostic Energy Saving in \
+MPI Communication Primitives"
   LANGUAGES C)
 
 # Policy CMP0074: this policy is to use <PackageName>_ROOT variables if defined
@@ -51,15 +52,22 @@ enable_testing()
 # Options
 option(CNTD_ENABLE_CUDA "Enable CUDA monitoring on NVIDIA GPUs" OFF)
 option(CNTD_DISABLE_PROFILING_MPI "Disable MPI profiling" OFF)
-option(CNTD_ENABLE_ACCESSORY_MPI
-       "Enable the instrumentation of all accessory MPI functions" OFF)
-option(CNTD_ENABLE_P2P_MPI
-       "Enable the instrumentation of all point-to-point MPI functions" ON)
-option(CNTD_ENABLE_COLLECTIVE_MPI
-       "Enable the instrumentation of all collective MPI functions" ON)
+option(
+  CNTD_ENABLE_ACCESSORY_MPI
+  "Enable the instrumentation of all accessory MPI functions"
+  OFF)
+option(
+  CNTD_ENABLE_P2P_MPI
+  "Enable the instrumentation of all point-to-point MPI functions"
+  ON)
+option(
+  CNTD_ENABLE_COLLECTIVE_MPI
+  "Enable the instrumentation of all collective MPI functions"
+  ON)
 option(
   CNTD_DISABLE_ALL_MPI_EXCEPT_INI_FIN
-  "Disable the instrumentation of all MPI functions, except for initialization and finaization"
+  "Disable the instrumentation of all MPI functions, except for \
+initialization and finaization"
   OFF)
 option(CNTD_ENABLE_DEBUG_MPI "Enable the debug prints on MPI functions" OFF)
 option(CNTD_ENABLE_TESTS "Enable the unit-test" ON)
@@ -68,13 +76,24 @@ option(CNTD_ENABLE_TESTS "Enable the unit-test" ON)
 option(CNTD_ENABLE_MOSQUITTO "Enable MQTT message passing" OFF)
 
 # SEANERGYS Access Daemon
-option(CNTD_ENABLE_ACCESS_DAEMON
-       "Delegate CPU frequency and power access to the SEANERGYS Access Daemon"
-       OFF)
+option(
+  CNTD_ENABLE_ACCESS_DAEMON
+  "Delegate CPU frequency and power access to the SEANERGYS Access Daemon"
+  OFF)
+set(
+  EASYBUS_PREFIX
+  ""
+  CACHE PATH "Access Daemon install prefix (include/ and lib/ with EasyBUS)")
+set(
+  SEANERBUS_PREFIX
+  ""
+  CACHE PATH "seanerbus-cpp install prefix (lib/libseanerbus_c.so)")
 
 # HWP/CPUFREQ Options
-option(CNTD_HWP_AUTO_DISCOVER "Find automagically if hwp-states are available"
-       ON)
+option(
+  CNTD_HWP_AUTO_DISCOVER
+  "Find automagically if hwp-states are available"
+  ON)
 option(CNTD_HWP_DISCOVERED "Manual set if hwp-states are available" OFF)
 option(CNTD_USE_CPUFREQ "Manual set if use \"cpufreq\" interface" ON)
 
@@ -89,8 +108,9 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
       "${default_build_type}"
       CACHE STRING "Choose the type of build." FORCE)
   # Set the possible values of build type for cmake-gui
-  set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release"
-                                               "MinSizeRel" "RelWithDebInfo")
+  set_property(
+    CACHE CMAKE_BUILD_TYPE
+    PROPERTY STRINGS "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
 endif()
 
 # DISCOVERING ARCHITECTURE
@@ -98,8 +118,9 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
   file(READ "/proc/cpuinfo" cpu_info)
 
   if(${CMAKE_SYSTEM_PROCESSOR} STREQUAL "x86_64")
-    string(REGEX REPLACE ".*vendor_id[ \t]*:[ \t]+([a-zA-Z0-9_-]+).*" "\\1"
-                         vendor_id "${cpu_info}")
+    string(
+      REGEX REPLACE ".*vendor_id[ \t]*:[ \t]+([a-zA-Z0-9_-]+).*" "\\1"
+      vendor_id "${cpu_info}")
 
     if(vendor_id STREQUAL "GenuineIntel")
       if(CNTD_HWP_AUTO_DISCOVER)
@@ -164,20 +185,45 @@ if(CNTD_ENABLE_MOSQUITTO)
   target_include_directories(cntd_mosquitto INTERFACE ${MOSQUITTO_INCLUDE_DIR})
 endif()
 
+# SEANERGYS Access Daemon (EasyBUS)
+if(CNTD_ENABLE_ACCESS_DAEMON)
+  # target_link_options() and the LINKER: prefix need CMake >= 3.13
+  cmake_minimum_required(VERSION 3.13)
+  find_package(EASYBUS REQUIRED)
+  # The AD and SeanerBUS prefixes are outside the system loader paths
+  list(
+    APPEND
+    CMAKE_BUILD_RPATH
+    "${EASYBUS_PREFIX}/lib"
+    "${SEANERBUS_PREFIX}/lib")
+  list(
+    APPEND
+    CMAKE_INSTALL_RPATH
+    "${EASYBUS_PREFIX}/lib"
+    "${SEANERBUS_PREFIX}/lib")
+  add_library(cntd_easybus INTERFACE)
+  target_link_libraries(cntd_easybus INTERFACE ${EASYBUS_LIBRARIES})
+  target_include_directories(cntd_easybus INTERFACE ${EASYBUS_INCLUDE_DIRS})
+  # RUNPATH is not inherited by dependencies, and libaccess_easybus needs
+  # libseanerbus_c, so emit a plain RPATH
+  target_link_options(cntd_easybus INTERFACE "LINKER:--disable-new-dtags")
+endif()
+
 # libfort
 find_package(libfort)
 # if libfort is not found, use the
 if(NOT libfort_FOUND)
   message(STATUS "libfort not found, using the bundled version")
   # add external project for libfort
-  ExternalProject_Add(
+  externalproject_add(
     libfort_external
     URL ${CMAKE_SOURCE_DIR}/external/libfort-0.4.2.tar.gz
     PREFIX ${CMAKE_CURRENT_BINARY_DIR}/libfort
-    CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_BINARY_DIR}/libfort
-               -DCMAKE_INSTALL_LIBDIR=${CMAKE_CURRENT_BINARY_DIR}/libfort/lib
-               -DCMAKE_C_COMPILER=gcc
-               -DCMAKE_CXX_COMPILER=g++
+    CMAKE_ARGS
+      -DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_BINARY_DIR}/libfort
+      -DCMAKE_INSTALL_LIBDIR=${CMAKE_CURRENT_BINARY_DIR}/libfort/lib
+      -DCMAKE_C_COMPILER=gcc
+      -DCMAKE_CXX_COMPILER=g++
   )
 
   # add libfort as a target
@@ -190,29 +236,34 @@ if(NOT libfort_FOUND)
   # path to the libfort library
   set_target_properties(
     libfort
-    PROPERTIES IMPORTED_LOCATION
-               ${CMAKE_CURRENT_BINARY_DIR}/libfort/lib/libfort.a
-               INTERFACE_INCLUDE_DIRECTORIES
-               ${CMAKE_CURRENT_BINARY_DIR}/libfort/include
-               INTERFACE_SYSTEM_INCLUDE_DIRECTORIES
-               ${CMAKE_CURRENT_BINARY_DIR}/libfort/include)
+    PROPERTIES
+      IMPORTED_LOCATION
+        ${CMAKE_CURRENT_BINARY_DIR}/libfort/lib/libfort.a
+      INTERFACE_INCLUDE_DIRECTORIES
+        ${CMAKE_CURRENT_BINARY_DIR}/libfort/include
+      INTERFACE_SYSTEM_INCLUDE_DIRECTORIES
+        ${CMAKE_CURRENT_BINARY_DIR}/libfort/include)
 else()
   message(STATUS "libfort found")
   add_library(libfort INTERFACE)
   # set the include directories
-  set_target_properties(libfort PROPERTIES INTERFACE_INCLUDE_DIRECTORIES
-                                           "${libfort_INCLUDE_DIRS}")
+  set_target_properties(
+    libfort
+    PROPERTIES INTERFACE_INCLUDE_DIRECTORIES "${libfort_INCLUDE_DIRS}")
   # set the library directories
-  set_target_properties(libfort PROPERTIES INTERFACE_LINK_DIRECTORIES
-                                           "${libfort_LIBRARY_DIRS}")
+  set_target_properties(
+    libfort
+    PROPERTIES INTERFACE_LINK_DIRECTORIES "${libfort_LIBRARY_DIRS}")
   # set the libraries
   target_link_libraries(libfort INTERFACE ${libfort_LIBRARIES})
 endif()
 
 # Get compile definitions
 if(DEFINED ENV{CNTD_GET_COMPILE_DEFINITIONS})
-  get_directory_property(DirDefs DIRECTORY ${CMAKE_SOURCE_DIR}
-                                           COMPILE_DEFINITIONS)
+  get_directory_property(
+    DirDefs
+    DIRECTORY ${CMAKE_SOURCE_DIR}
+    COMPILE_DEFINITIONS)
   foreach(d ${DirDefs})
     message(STATUS "Found compile definition: " ${d})
   endforeach()
@@ -233,6 +284,6 @@ if(CLANG_FORMAT)
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 endif()
 
-if (CNTD_ENABLE_TESTS)
+if(CNTD_ENABLE_TESTS)
   add_subdirectory(unit-test)
 endif()

@@ -81,6 +81,7 @@ COUNTDOWN supports the following build options:
     CNTD_DISABLE_P2P_MPI            (Disable the instrumentation of P2P MPI functions)
     CNTD_DISABLE_ACCESSORY_MPI      (Disable the instrumentation of accessory MPI functions focusing only on collective)
     CNTD_ENABLE_DEBUG_MPI           (Enable the debug prints on MPI functions)
+    CNTD_ENABLE_ACCESS_DAEMON       (Build the SEANERGYS Access Daemon backend, see EASYBUS_PREFIX and SEANERBUS_PREFIX below)
 
 Example:
 
@@ -102,17 +103,57 @@ still use the machine's read-only topology/nominal-frequency discovery. Tests
 run serially because COUNTDOWN's shared-memory names are job/user-scoped; do not
 run another COUNTDOWN job with the same job/user identity concurrently.
 
-`CNTD_ENABLE_ACCESS_DAEMON=ON` requires the current SeanerBUS **Entity** C API.
-For a local installation, expose its pkg-config and runtime library directories,
-for example:
+`CNTD_ENABLE_ACCESS_DAEMON=ON` talks to the Access Daemon through its EasyBUS
+library (`libaccess_easybus`), built against the current SeanerBUS **Entity** C
+API. Install the Access Daemon (`make install PREFIX=... SEABUS_PREFIX=...`)
+and pass both prefixes; they are added to the RPATH, so no `LD_LIBRARY_PATH` is
+needed:
 
-    PKG_CONFIG_PATH="$HOME/opt/seanerbus/lib/pkgconfig" cmake -S . -B build -DCNTD_ENABLE_ACCESS_DAEMON=ON
+    cmake -S . -B build -DCNTD_ENABLE_ACCESS_DAEMON=ON \
+        -DEASYBUS_PREFIX="$HOME/opt/access-daemon" \
+        -DSEANERBUS_PREFIX="$HOME/opt/seanerbus"
     cmake --build build
-    LD_LIBRARY_PATH="$HOME/opt/seanerbus/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}" ctest --test-dir build -L baseline --output-on-failure
+    ctest --test-dir build -L baseline --output-on-failure
 
 An AD-enabled build does not enable daemon use in these baseline tests. They
-establish MPI startup, sampling and reporting only, not working frequency SETs
-or daemon discovery. Existing discovery/SET limitations remain to be addressed.
+establish MPI startup, sampling and reporting only.
+
+The initial EasyBUS integration provides CPU-frequency GET and SET through
+`src/access_daemon.h`. GET reads `Metric/Freq/Cpu` in kHz. SET targets
+`Actuator/Freq/Cpu`, for one CPU or the same value on every CPU. The initial
+release supports the daemon's `act.cpu_freq.driver_pstate.so` backend, which
+sets a maximum frequency. Load only that CPU-frequency actuator for this
+integration. A successful SET confirms the daemon operation, not that the
+measured frequency equals the requested value.
+
+SET requires the Access Daemon changes on `fix/easybus-issues` and SeanerBUS C
+wrappers for `SetReqV1` and `ErrorResV1`, currently on `feat/c-capnpc`. Install
+those development versions before building COUNTDOWN. Do not send SET requests
+to an older daemon: it may misread the encoded payload and write an unintended
+value before EasyBUS rejects its reply. Multi-CPU SET is non-atomic:
+failure can leave some settings changed, and COUNTDOWN does not retry or roll
+them back.
+
+This stage targets serialized standalone calls. Live SET/read-back validation
+is pending. Moving blocking AD calls out of MPI runtime signal handlers,
+runtime failure handling, and restoration of pre-run settings are separate
+work. EasyBUS timeout/reconnect cleanup also remains incomplete. Do not treat
+this integration as a validated automatic MPI frequency policy.
+
+`CNTD_ACCESS_DAEMON_ENDPOINT` selects the bus endpoint, defaulting to
+`demobus://localhost:5398`.
+
+To check the client against a live daemon, start the SeanerBUS broker, then the
+naming service, then `accessd` with the `seanerbus.so` plugin, and run:
+
+    build/unit-test/access_daemon_smoke             # reads only
+    build/unit-test/access_daemon_smoke 2000000     # also requests 2000000 kHz on all CPUs
+
+It prints one `[ OK ]` or `[FAIL]` line per check and exits non-zero on any
+failure.
+
+The optional SET changes hardware settings and does not restore them. Run it
+only on an authorized test system with a separate restoration procedure.
 
 ## RUN REQUIREMENTS
 
@@ -173,6 +214,7 @@ COUNTDOWN can be configured setting the following environment variables:
     CNTD_DISABLE_POWER_MONITOR=[enable/on/yes/true/1]       (Disable the energy/power monitoring)
     CNTD_ENABLE_REPORT=[enable/on/yes/true/1]               (Save the summary report on a file)
     CNTD_ENABLE_TIMESERIES_REPORT=[enable/on/yes/true/1]    (Enable time-series reports, default sampling time 1s)
+    CNTD_USE_ACCESS_DAEMON=[enable/on/yes/true/1]           (Use the experimental Access Daemon backend instead of native power/frequency access; requires CNTD_ENABLE_ACCESS_DAEMON=ON, updated EasyBUS, and further runtime-safety work)
 
 ### Perf events
 

@@ -5,28 +5,29 @@
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
- *			* Redistributions of source code must retain the above copyright notice, this
- *				list of conditions and the following disclaimer.
+ *			* Redistributions of source code must retain the above
+ *copyright notice, this list of conditions and the following disclaimer.
  *
- *			* Redistributions in binary form must reproduce the above copyright notice,
- *				this list of conditions and the following disclaimer in the documentation
- *				and/or other materials provided with the distribution.
+ *			* Redistributions in binary form must reproduce the
+ *above copyright notice, this list of conditions and the following disclaimer
+ *in the documentation and/or other materials provided with the distribution.
  *
- *			* Neither the name of the copyright holder nor the names of its
- *				contributors may be used to endorse or promote products derived from
- *				this software without specific prior written permission.
+ *			* Neither the name of the copyright holder nor the names
+ *of its contributors may be used to endorse or promote products derived from
+ *this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
- * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
- * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ *ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+ *LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ *CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ *SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ *INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ *CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ *ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ *POSSIBILITY OF SUCH DAMAGE.
+ */
 
 #include "cntd.h"
 
@@ -57,7 +58,8 @@ HIDDEN void init_rapl()
 			int socket_id;
 			sscanf(filevalue, "package-%d", &socket_id);
 
-			// Find sysfs file of RAPL for package energy measurements
+			// Find sysfs file of RAPL for package energy
+			// measurements
 			snprintf(energy_pkg_file[socket_id], STRING_SIZE,
 				 PKG_ENERGY_UJ, i);
 
@@ -84,7 +86,8 @@ HIDDEN void init_rapl()
 				if (dir) {
 					closedir(dir);
 
-					// Check if this domain is the dram domain
+					// Check if this domain is the dram
+					// domain
 					snprintf(filename, STRING_SIZE,
 						 INTEL_RAPL_DRAM_NAME, i, i, j);
 					if (read_str_from_file(filename,
@@ -97,7 +100,8 @@ HIDDEN void init_rapl()
 							   EXIT_FAILURE);
 					}
 					if (strstr(filevalue, "dram") != NULL) {
-						// Open sysfs file of RAPL for dram energy measurements
+						// Open sysfs file of RAPL for
+						// dram energy measurements
 						snprintf(energy_dram_file
 								 [socket_id],
 							 STRING_SIZE,
@@ -341,7 +345,8 @@ HIDDEN void init_perf()
 				hostname, world_rank, pid);
 			PMPI_Abort(MPI_COMM_WORLD, EXIT_FAILURE);
 		}
-		//ioctl(cntd->perf_fd[i][PERF_INST_RET], PERF_EVENT_IOC_RESET, 0);
+		// ioctl(cntd->perf_fd[i][PERF_INST_RET], PERF_EVENT_IOC_RESET,
+		// 0);
 
 		perf_pe.config = PERF_COUNT_HW_CPU_CYCLES;
 		cntd->perf_fd[i][PERF_CYCLES] =
@@ -352,7 +357,8 @@ HIDDEN void init_perf()
 				hostname, world_rank, pid);
 			PMPI_Abort(MPI_COMM_WORLD, EXIT_FAILURE);
 		}
-		//ioctl(cntd->perf_fd[i][PERF_CYCLES], PERF_EVENT_IOC_RESET, 0);
+		// ioctl(cntd->perf_fd[i][PERF_CYCLES], PERF_EVENT_IOC_RESET,
+		// 0);
 
 #ifdef INTEL
 		perf_pe.config = PERF_COUNT_HW_REF_CPU_CYCLES;
@@ -364,10 +370,11 @@ HIDDEN void init_perf()
 				hostname, world_rank, pid);
 			PMPI_Abort(MPI_COMM_WORLD, EXIT_FAILURE);
 		}
-		//ioctl(cntd->perf_fd[i][PERF_CYCLES_REF], PERF_EVENT_IOC_RESET, 0);
+		// ioctl(cntd->perf_fd[i][PERF_CYCLES_REF],
+		// PERF_EVENT_IOC_RESET, 0);
 
-		//TODO: FIX
-		//perf_open_roofline(&perf_pe, i, pid, hostname, world_rank);
+		// TODO: FIX
+		// perf_open_roofline(&perf_pe, i, pid, hostname, world_rank);
 
 #endif
 
@@ -384,7 +391,8 @@ HIDDEN void init_perf()
 					PMPI_Abort(MPI_COMM_WORLD,
 						   EXIT_FAILURE);
 				}
-				//ioctl(cntd->perf_fd[i][j], PERF_EVENT_IOC_RESET, 0);
+				// ioctl(cntd->perf_fd[i][j],
+				// PERF_EVENT_IOC_RESET, 0);
 			}
 		}
 	}
@@ -399,8 +407,8 @@ HIDDEN void init_perf()
 		ioctl(cntd->perf_fd[i][PERF_CYCLES_REF], PERF_EVENT_IOC_ENABLE,
 		      0);
 
-		//TODO: FIX
-		//perf_enable_roofline(i);
+		// TODO: FIX
+		// perf_enable_roofline(i);
 #endif
 
 		for (j = 0; j < MAX_NUM_CUSTOM_PERF; j++) {
@@ -651,7 +659,7 @@ HIDDEN void finalize_perf()
 		ioctl(cntd->perf_fd[i][PERF_CYCLES_REF], PERF_EVENT_IOC_DISABLE,
 		      0);
 
-		//perf_disable_roofline(i);
+		// perf_disable_roofline(i);
 
 #endif
 
@@ -668,8 +676,8 @@ HIDDEN void finalize_perf()
 #ifdef INTEL
 		close(cntd->perf_fd[i][PERF_CYCLES_REF]);
 
-		//TODO: FIX
-		//perf_close_roofline(i);
+		// TODO: FIX
+		// perf_close_roofline(i);
 #endif
 
 		for (j = 0; j < MAX_NUM_CUSTOM_PERF; j++) {
@@ -737,7 +745,7 @@ HIDDEN void init_arch_conf()
 		cntd->node.num_cpus =
 			hwloc_get_nbobjs_by_depth(topology, depth);
 
-	//Destroy topology object
+	// Destroy topology object
 	hwloc_topology_destroy(topology);
 
 	// Get cpu id

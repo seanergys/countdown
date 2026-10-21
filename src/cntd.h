@@ -5,28 +5,29 @@
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
- *			* Redistributions of source code must retain the above copyright notice, this
- *				list of conditions and the following disclaimer.
+ *			* Redistributions of source code must retain the above
+ *copyright notice, this list of conditions and the following disclaimer.
  *
- *			* Redistributions in binary form must reproduce the above copyright notice,
- *				this list of conditions and the following disclaimer in the documentation
- *				and/or other materials provided with the distribution.
+ *			* Redistributions in binary form must reproduce the
+ *above copyright notice, this list of conditions and the following disclaimer
+ *in the documentation and/or other materials provided with the distribution.
  *
- *			* Neither the name of the copyright holder nor the names of its
- *				contributors may be used to endorse or promote products derived from
- *				this software without specific prior written permission.
+ *			* Neither the name of the copyright holder nor the names
+ *of its contributors may be used to endorse or promote products derived from
+ *this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
- * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
- * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ *ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+ *LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ *CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ *SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ *INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ *CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ *ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ *POSSIBILITY OF SUCH DAMAGE.
+ */
 
 #ifndef __CNTD_H__
 #define __CNTD_H__
@@ -53,7 +54,7 @@
 #include <math.h> // for \"ceil\".
 #include "cntd_common.h"
 
-//TABLE
+// TABLE
 #include "fort.h"
 
 // MPI
@@ -211,12 +212,12 @@ typedef struct {
 	double timing_event_sample[2];
 
 	uint64_t perf[MAX_NUM_PERF_EVENTS][2];
-	uint64_t perf_te[MAX_NUM_PERF_EVENTS]
-			[2]; // \"perf_te\" = \"perf time enabled\"
-	uint64_t perf_tr[MAX_NUM_PERF_EVENTS]
-			[2]; // \"perf_tr\" = \"perf time running\"
-	double perf_tm[MAX_NUM_PERF_EVENTS]
-		      [2]; // \"perf_tm\" = \"perf time multiplier\"
+	uint64_t perf_te[MAX_NUM_PERF_EVENTS][2]; // \"perf_te\" = \"perf time
+						  // enabled\"
+	uint64_t perf_tr[MAX_NUM_PERF_EVENTS][2]; // \"perf_tr\" = \"perf time
+						  // running\"
+	double perf_tm[MAX_NUM_PERF_EVENTS][2]; // \"perf_tm\" = \"perf time
+						// multiplier\"
 	uint64_t tsc[2];
 	double load[2];
 
@@ -232,9 +233,11 @@ typedef struct {
 	char hostname[STRING_SIZE];
 	unsigned int num_gpus;
 
-	uint64_t util[MAX_NUM_GPUS]; // Percentage - counter (sample period may be between 1 second and 1/6 second)
-	uint64_t util_mem
-		[MAX_NUM_GPUS]; // Percentage - counter (sample period may be between 1 second and 1/6 second)
+	uint64_t util[MAX_NUM_GPUS]; // Percentage - counter (sample period may
+				     // be between 1 second and 1/6 second)
+	uint64_t util_mem[MAX_NUM_GPUS]; // Percentage - counter (sample period
+					 // may be between 1 second and 1/6
+					 // second)
 
 	uint64_t temp[MAX_NUM_GPUS]; // Celsius - counter
 	uint64_t clock[MAX_NUM_GPUS]; // Clock in MHz - counter
@@ -253,7 +256,8 @@ typedef struct {
 	double energy_sys; // Joules - counter
 	double energy_pkg[MAX_NUM_SOCKETS]; // Joules - counter
 	double energy_dram[MAX_NUM_SOCKETS]; // Joules - counter
-	double energy_gpu[MAX_NUM_SOCKETS]; // Joules - counter - only for Power9
+	double energy_gpu[MAX_NUM_SOCKETS]; // Joules - counter - only for
+					    // Power9
 } CNTD_NodeInfo_t;
 
 // Global variables
@@ -334,7 +338,7 @@ void release_access(int var);
 void init_perf();
 void finalize_perf();
 void init_arch_conf();
-//cpufreq
+// cpufreq
 void init_cpufreq();
 void finalize_cpufreq();
 // init.c
