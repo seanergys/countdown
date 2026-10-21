@@ -26,10 +26,12 @@ endforeach()
 # Access Daemon client smoke test. It needs a running SeanerBUS broker and
 # Access Daemon, so it is built but not registered with CTest.
 if(CNTD_ENABLE_ACCESS_DAEMON)
-  find_package(PkgConfig REQUIRED)
-  pkg_check_modules(SEANERBUS_C REQUIRED IMPORTED_TARGET seanerbus-c)
-
-  add_executable(access_daemon_smoke access_daemon_smoke.c ../src/access_daemon.c)
-  target_compile_definitions(access_daemon_smoke PRIVATE "ACCESS_DAEMON_ENABLED")
-  target_link_libraries(access_daemon_smoke PRIVATE PkgConfig::SEANERBUS_C)
+  add_executable(
+    access_daemon_smoke
+    access_daemon_smoke.c
+    ../src/access_daemon.c)
+  target_compile_definitions(
+    access_daemon_smoke
+    PRIVATE "ACCESS_DAEMON_ENABLED")
+  target_link_libraries(access_daemon_smoke PRIVATE cntd_easybus)
 endif()

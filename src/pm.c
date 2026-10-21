@@ -5,28 +5,29 @@
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
- *			* Redistributions of source code must retain the above copyright notice, this
- *				list of conditions and the following disclaimer.
+ *			* Redistributions of source code must retain the above
+ *copyright notice, this list of conditions and the following disclaimer.
  *
- *			* Redistributions in binary form must reproduce the above copyright notice,
- *				this list of conditions and the following disclaimer in the documentation
- *				and/or other materials provided with the distribution.
+ *			* Redistributions in binary form must reproduce the
+ *above copyright notice, this list of conditions and the following disclaimer
+ *in the documentation and/or other materials provided with the distribution.
  *
- *			* Neither the name of the copyright holder nor the names of its
- *				contributors may be used to endorse or promote products derived from
- *				this software without specific prior written permission.
+ *			* Neither the name of the copyright holder nor the names
+ *of its contributors may be used to endorse or promote products derived from
+ *this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
- * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
- * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ *ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+ *LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ *CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ *SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ *INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ *CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ *ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ *POSSIBILITY OF SUCH DAMAGE.
+ */
 
 #include "cntd.h"
 #include <stdlib.h>
@@ -82,10 +83,9 @@ HIDDEN void set_freq(int freq_khz)
 			 * The Access Daemon owns the knob, so COUNTDOWN only
 			 * asks for the frequency of the CPU this rank runs on.
 			 *
-			 * TODO: the SET path is untested and blocked by the
-			 * daemon (no reply, wrong metric/CPU index). Aborting
-			 * the whole job on any failure or timeout here is too
-			 * aggressive; decide between abort and degrading.
+			 * TODO: move blocking AD calls out of signal handlers
+			 * and disable interventions instead of aborting on
+			 * runtime AD failures.
 			 */
 			if (access_daemon_set_cpu_freq_limit(
 				    cntd->rank->cpu_id, (uint64_t)freq_khz) <
@@ -138,8 +138,8 @@ HIDDEN void set_freq(int freq_khz)
 			}
 		} else {
 #if (defined INTEL || defined AMD)
-			// If CPUFREQ is not enabled, we need to write the P-state to the
-			// MSR.
+			// If CPUFREQ is not enabled, we need to write the
+			// P-state to the MSR.
 			int pstate;
 			int written_pstate;
 			int offset = IA32_PERF_CTL;
@@ -148,11 +148,13 @@ HIDDEN void set_freq(int freq_khz)
 			if (cntd->hwp_usage) {
 				offset = IA32_HWP_REQUEST;
 				/*
-			  This is needed to write also \"Minimum_Performance\" field of this
-			  HWP-state (bits 7-0), as well as \"Maximum_Performance\" one, which
-			  is composed by bits 15-8. Both of them are written to the same value,
-			  to disable, AT THE MOMENT, all hardware optimizations.
-			*/
+			      This is needed to write also
+			      \"Minimum_Performance\" field of this HWP-state
+			      (bits 7-0), as well as \"Maximum_Performance\"
+			      one, which is composed by bits 15-8. Both of them
+			      are written to the same value, to disable, AT THE
+			      MOMENT, all hardware optimizations.
+			    */
 				written_pstate = (pstate & 0xFF) |
 						 ((pstate << 8) & 0xFF00);
 			}
@@ -185,23 +187,23 @@ HIDDEN void set_user_min_freq()
 
 HIDDEN void set_sys_max_freq()
 {
-	//#ifdef HWP_AVAIL
+	// #ifdef HWP_AVAIL
 	//	if (cntd->hwp_usage) {
 	//		set_min_epp();
 	//		set_min_aw();
 	//	}
-	//#endif
+	// #endif
 	set_freq(cntd->sys_freq_khz[MAX]);
 }
 
 HIDDEN void set_sys_min_freq()
 {
-	//#ifdef HWP_AVAIL
+	// #ifdef HWP_AVAIL
 	//	if (hwp_usage) {
 	//		set_max_epp();
 	//		set_min_aw();
 	//	}
-	//#endif
+	// #endif
 	set_freq(cntd->sys_freq_khz[MIN]);
 }
 
