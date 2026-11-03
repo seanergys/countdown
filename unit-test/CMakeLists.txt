@@ -7,6 +7,18 @@ target_include_directories(hello PRIVATE ${MPI_INCLUDE_PATH})
 #add_test(NAME Unit-test COMMAND "srun" "${CMAKE_BINARY_DIR}/unit-test/hello")
 add_executable(baseline_mpi baseline_mpi.c)
 target_link_libraries(baseline_mpi PRIVATE MPI::MPI_C ${CMAKE_DL_LIBS})
+foreach(layout accessd flat mixed)
+  add_test(NAME EasyBUS-layout-${layout}
+    COMMAND ${CMAKE_COMMAND}
+      "-DLAYOUT=${layout}"
+      "-DFIXTURE_DIR=${CMAKE_CURRENT_BINARY_DIR}/easybus-layout/${layout}"
+      "-DFIND_EASYBUS_MODULE=${PROJECT_SOURCE_DIR}/cmake/FindEASYBUS.cmake"
+      "-DLIB_PREFIX=${CMAKE_SHARED_LIBRARY_PREFIX}"
+      "-DLIB_SUFFIX=${CMAKE_SHARED_LIBRARY_SUFFIX}"
+      -P "${CMAKE_CURRENT_SOURCE_DIR}/test_easybus_layout.cmake")
+  set_tests_properties(EasyBUS-layout-${layout} PROPERTIES LABELS "easybus")
+endforeach()
+
 foreach(ranks 1 2)
   add_test(NAME Baseline-${ranks}-ranks
   COMMAND ${CMAKE_COMMAND}

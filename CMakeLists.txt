@@ -83,7 +83,7 @@ option(
 set(
   EASYBUS_PREFIX
   ""
-  CACHE PATH "Access Daemon install prefix (include/ and lib/ with EasyBUS)")
+  CACHE PATH "Access Daemon install prefix (with EasyBUS)")
 set(
   SEANERBUS_PREFIX
   ""
@@ -190,17 +190,11 @@ if(CNTD_ENABLE_ACCESS_DAEMON)
   # target_link_options() and the LINKER: prefix need CMake >= 3.13
   cmake_minimum_required(VERSION 3.13)
   find_package(EASYBUS REQUIRED)
-  # The AD and SeanerBUS prefixes are outside the system loader paths
-  list(
-    APPEND
-    CMAKE_BUILD_RPATH
-    "${EASYBUS_PREFIX}/lib"
-    "${SEANERBUS_PREFIX}/lib")
-  list(
-    APPEND
-    CMAKE_INSTALL_RPATH
-    "${EASYBUS_PREFIX}/lib"
-    "${SEANERBUS_PREFIX}/lib")
+  foreach(library IN LISTS EASYBUS_LIBRARIES)
+    get_filename_component(library_dir "${library}" DIRECTORY)
+    list(APPEND CMAKE_BUILD_RPATH "${library_dir}")
+    list(APPEND CMAKE_INSTALL_RPATH "${library_dir}")
+  endforeach()
   add_library(cntd_easybus INTERFACE)
   target_link_libraries(cntd_easybus INTERFACE ${EASYBUS_LIBRARIES})
   target_include_directories(cntd_easybus INTERFACE ${EASYBUS_INCLUDE_DIRS})
