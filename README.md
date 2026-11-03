@@ -148,7 +148,7 @@ timeout/reconnect cleanup also remains incomplete. Do not treat this integration
 as a validated automatic MPI frequency policy.
 
 `CNTD_ACCESS_DAEMON_ENDPOINT` selects the bus endpoint, defaulting to
-`demobus://localhost:5398`.
+`seanerbroker://localhost:5398`.
 
 To check the client against a live daemon, start the SeanerBUS broker, then the
 naming service, then `accessd` with the `seanerbus.so` plugin, and run:

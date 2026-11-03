@@ -39,7 +39,7 @@
 // Device selector meaning "every device of the requested kind"
 #define ACCESS_DAEMON_DEV_ALL (-1)
 
-#define ACCESS_DAEMON_DEFAULT_ENDPOINT "demobus://localhost:5398"
+#define ACCESS_DAEMON_DEFAULT_ENDPOINT "seanerbroker://localhost:5398"
 
 typedef struct access_daemon_values_s {
 	uint64_t values[ACCESS_DAEMON_MAX_DEVICES];
