@@ -92,11 +92,25 @@ static const access_daemon_group_t access_daemon_socket_power = {
 	Power, Socket, "Power/Socket"
 };
 
+// EasyBUS stores a failed GET's daemon error text in the affected output.
+static const char *access_daemon_get_error(const metric_t *mets, int mets_count)
+{
+	int m;
+
+	for (m = 0; mets != NULL && m < mets_count; m++) {
+		if (mets[m].error_msg != NULL && mets[m].error_msg[0] != '\0')
+			return mets[m].error_msg;
+	}
+
+	return NULL;
+}
+
 static const metric_t *access_daemon_fetch(const access_daemon_group_t *group,
 					   int device_no)
 {
 	metric_t *mets = NULL;
 	int mets_count = 0;
+	const char *daemon_error;
 	int m;
 
 	if (!easybus_is_connected()) {
@@ -106,11 +120,14 @@ static const metric_t *access_daemon_fetch(const access_daemon_group_t *group,
 	}
 
 	errno = 0;
-	if (!easybus_request(Met, group->metric, group->device, Get, device_no,
-			     NULL, &mets, &mets_count)) {
+	if (!easybus_request_get(Met, group->metric, group->device, device_no,
+				 &mets, &mets_count)) {
+		daemon_error = access_daemon_get_error(mets, mets_count);
 		access_daemon_set_error(
-			"EasyBUS request for %s failed: %s", group->label,
-			errno != 0 ? strerror(errno) : "no details");
+			"EasyBUS GET for %s failed: %s%s%s", group->label,
+			errno != 0 ? strerror(errno) : "no details",
+			daemon_error != NULL ? "; daemon: " : "",
+			daemon_error != NULL ? daemon_error : "");
 		return NULL;
 	}
 
@@ -235,6 +252,9 @@ int access_daemon_get_socket_power(int socket, access_daemon_values_t *out)
 
 int access_daemon_set_cpu_freq_limit(int cpu, uint64_t freq_khz)
 {
+	// EasyBUS requires a 256-byte buffer for the daemon's error text.
+	char daemon_error[256] = "";
+
 	if (cpu < ACCESS_DAEMON_DEV_ALL || freq_khz == 0) {
 		access_daemon_set_error(
 			"CPU selector must be -1 or nonnegative and frequency must be positive");
@@ -242,10 +262,12 @@ int access_daemon_set_cpu_freq_limit(int cpu, uint64_t freq_khz)
 	}
 
 	errno = 0;
-	if (!easybus_request(Act, Freq, Cpu, Set, cpu, &freq_khz, NULL, NULL)) {
+	if (!easybus_request_set_imm(Freq, Cpu, cpu, freq_khz, daemon_error)) {
 		access_daemon_set_error(
-			"EasyBUS CPU-frequency SET failed: %s; some settings may have changed",
-			errno != 0 ? strerror(errno) : "no details");
+			"EasyBUS CPU-frequency SET failed: %s%s%s; some settings may have changed",
+			errno != 0 ? strerror(errno) : "no details",
+			daemon_error[0] != '\0' ? "; daemon: " : "",
+			daemon_error);
 		return -1;
 	}
 

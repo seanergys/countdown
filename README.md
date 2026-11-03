@@ -105,9 +105,12 @@ run another COUNTDOWN job with the same job/user identity concurrently.
 
 `CNTD_ENABLE_ACCESS_DAEMON=ON` talks to the Access Daemon through its EasyBUS
 library (`libaccess_easybus`), built against the current SeanerBUS **Entity** C
-API. Install the Access Daemon (`make install PREFIX=... SEABUS_PREFIX=...`)
-and pass both prefixes; they are added to the RPATH, so no `LD_LIBRARY_PATH` is
-needed:
+API. Install the Access Daemon (`make install PREFIX=... SEABUS_PREFIX=...`) and
+pass both prefixes. Access Daemon installs its headers under `include/accessd`
+and libraries under `lib/accessd`. The previous flat layout is also supported.
+COUNTDOWN adds the library directories to the RPATH, so no `LD_LIBRARY_PATH` is
+needed. Use a fresh build directory after changing the installation layout or
+prefix to avoid cached paths:
 
     cmake -S . -B build -DCNTD_ENABLE_ACCESS_DAEMON=ON \
         -DEASYBUS_PREFIX="$HOME/opt/access-daemon" \
@@ -126,19 +129,23 @@ sets a maximum frequency. Load only that CPU-frequency actuator for this
 integration. A successful SET confirms the daemon operation, not that the
 measured frequency equals the requested value.
 
-SET requires the Access Daemon changes on `fix/easybus-issues` and SeanerBUS C
-wrappers for `SetReqV1` and `ErrorResV1`, currently on `feat/c-capnpc`. Install
-those development versions before building COUNTDOWN. Do not send SET requests
-to an older daemon: it may misread the encoded payload and write an unintended
-value before EasyBUS rejects its reply. Multi-CPU SET is non-atomic:
+The adapter uses the split EasyBUS API (`easybus_request_get` and
+`easybus_request_set_imm`) from Access Daemon `main` (`13406fb` or later) and
+the SeanerBUS C wrappers for `SetReqV1` and `ErrorResV1`, currently on
+`feat/c-capnpc`. Install those versions before building COUNTDOWN. When the
+daemon answers with an error, `access_daemon_last_error()` includes its message.
+Do not send SET requests to an older daemon: it may misread the encoded payload
+and write an unintended value before EasyBUS rejects its reply. At `13406fb`,
+the pstate backend acknowledges SET without writing `scaling_max_freq`, so a
+successful SET does not yet change the limit. Multi-CPU SET is non-atomic:
 failure can leave some settings changed, and COUNTDOWN does not retry or roll
 them back.
 
-This stage targets serialized standalone calls. Live SET/read-back validation
-is pending. Moving blocking AD calls out of MPI runtime signal handlers,
-runtime failure handling, and restoration of pre-run settings are separate
-work. EasyBUS timeout/reconnect cleanup also remains incomplete. Do not treat
-this integration as a validated automatic MPI frequency policy.
+This stage targets serialized standalone calls. Live SET/read-back validation is
+pending. Moving blocking AD calls out of MPI runtime signal handlers, runtime
+failure handling, and restoration of pre-run settings are separate work. EasyBUS
+timeout/reconnect cleanup also remains incomplete. Do not treat this integration
+as a validated automatic MPI frequency policy.
 
 `CNTD_ACCESS_DAEMON_ENDPOINT` selects the bus endpoint, defaulting to
 `demobus://localhost:5398`.
