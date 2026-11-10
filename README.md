@@ -103,6 +103,8 @@ still use the machine's read-only topology/nominal-frequency discovery. Tests
 run serially because COUNTDOWN's shared-memory names are job/user-scoped; do not
 run another COUNTDOWN job with the same job/user identity concurrently.
 
+### Access Daemon backend
+
 `CNTD_ENABLE_ACCESS_DAEMON=ON` talks to the Access Daemon through its EasyBUS
 library (`libaccess_easybus`), built against the current SeanerBUS **Entity** C
 API. Install the Access Daemon (`make install PREFIX=... SEABUS_PREFIX=...`) and
@@ -121,6 +123,14 @@ prefix to avoid cached paths:
 An AD-enabled build does not enable daemon use in these baseline tests. They
 establish MPI startup, sampling and reporting only.
 
+EasyBUS discovers endpoints for the local hostname. Sensor endpoints carry
+`Domain`, `Metric`, `Device` and `Device_no` labels. For example:
+
+| Sensor          | Domain   | Metric  | Device   | Device_no |
+| --------------- | -------- | ------- | -------- | --------- |
+| CPU 0 frequency | `Metric` | `Freq`  | `Cpu`    | `0`       |
+| Socket 0 power  | `Metric` | `Power` | `Socket` | `0`       |
+
 The initial EasyBUS integration provides CPU-frequency GET and SET through
 `src/access_daemon.h`. GET reads `Metric/Freq/Cpu` in kHz. SET targets
 `Actuator/Freq/Cpu`, for one CPU or the same value on every CPU. The initial
@@ -131,12 +141,12 @@ measured frequency equals the requested value.
 
 The adapter uses the split EasyBUS API (`easybus_request_get` and
 `easybus_request_set_imm`) from Access Daemon `main` (`13406fb` or later) and
-the SeanerBUS C wrappers for `SetReqV1` and `ErrorResV1`, currently on
-`feat/c-capnpc`. Install those versions before building COUNTDOWN. When the
-daemon answers with an error, `access_daemon_last_error()` includes its message.
-Do not send SET requests to an older daemon: it may misread the encoded payload
-and write an unintended value before EasyBUS rejects its reply. At `13406fb`,
-the pstate backend acknowledges SET without writing `scaling_max_freq`, so a
+the SeanerBUS C wrappers for `SetReqV1` and `ErrorResV1` on `main` (`b9af3ec` or
+later). Install those versions before building COUNTDOWN. When the daemon
+answers with an error, `access_daemon_last_error()` includes its message. Do not
+send SET requests to an older daemon: it may misread the encoded payload and
+write an unintended value before EasyBUS rejects its reply. At `13406fb`, the
+pstate backend acknowledges SET without writing `scaling_max_freq`, so a
 successful SET does not yet change the limit. Multi-CPU SET is non-atomic:
 failure can leave some settings changed, and COUNTDOWN does not retry or roll
 them back.
@@ -147,8 +157,12 @@ failure handling, and restoration of pre-run settings are separate work. EasyBUS
 timeout/reconnect cleanup also remains incomplete. Do not treat this integration
 as a validated automatic MPI frequency policy.
 
+To enable the backend for an instrumented application, set
+`CNTD_USE_ACCESS_DAEMON=1` and preload `libcntd.so` as described under
+[Instrumentation using dynamic linking](#instrumentation-using-dynamic-linking).
 `CNTD_ACCESS_DAEMON_ENDPOINT` selects the bus endpoint, defaulting to
-`seanerbroker://localhost:5398`.
+`seanerbroker://localhost:5398`. The previous `CNTD_ACCESS_DAEMON_UUIDS_*` and
+`CNTD_ACCESS_DAEMON_TIMEOUT_MS` settings are not supported by this backend.
 
 To check the client against a live daemon, start the SeanerBUS broker, then the
 naming service, then `accessd` with the `seanerbus.so` plugin, and run:
