@@ -1,0 +1,127 @@
+# GitLab CI for COUNTDOWN SEANERGYS.
+# Releases and CHANGELOG.md are handled manually; see CONTRIBUTING.md.
+
+# Every push runs the full pipeline exactly once: as a branch pipeline, or as
+# a merge request pipeline when the branch has an open MR. The "never" rule
+# only prevents a second, duplicate pipeline for the same push.
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS
+      when: never
+    - if: $CI_COMMIT_BRANCH
+    - if: $CI_COMMIT_TAG
+
+stages:
+  - prebuild
+  - build
+  - test
+
+default:
+  image: ubuntu:24.04
+  tags: [docker, cpu]
+
+variables:
+  DEBIAN_FRONTEND: noninteractive
+  BUILD_TYPE: Release
+
+.apt-setup:
+  before_script:
+    # The runner drops CAP_SETUID/CAP_SETGID, so apt cannot switch to its
+    # unprivileged _apt user; downloading as root is fine in a CI container.
+    - echo 'APT::Sandbox::User "root";' > /etc/apt/apt.conf.d/99-ci-sandbox
+    - apt-get update -qq
+
+.build-deps:
+  before_script:
+    - !reference [.apt-setup, before_script]
+    - >-
+      apt-get install -y -qq --no-install-recommends
+      build-essential cmake pkg-config libhwloc-dev
+      libopenmpi-dev openmpi-bin openssh-client > /dev/null
+
+# --- prebuild ----------------------------------------------------------------
+
+mr-title:
+  stage: prebuild
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+  script:
+    - |
+      title=$(printf '%s' "$CI_MERGE_REQUEST_TITLE" |
+        sed -E 's/^(Draft: *|\[Draft\] *|\(Draft\) *)//')
+      pattern='^(feat|fix|docs|refactor|test|build|ci|chore|perf|style)(\([a-z0-9-]+\))?!?: .+'
+      if ! printf '%s\n' "$title" | grep -qE "$pattern"; then
+        echo "MR title is not a Conventional Commit: '$CI_MERGE_REQUEST_TITLE'"
+        echo "Expected: <type>(<scope>): <description>, see CONTRIBUTING.md."
+        echo "After editing the title, rerun this job: title edits do not start a pipeline."
+        exit 1
+      fi
+
+clang-format:
+  stage: prebuild
+  before_script:
+    - !reference [.apt-setup, before_script]
+    - apt-get install -y -qq --no-install-recommends clang-format > /dev/null
+  script:
+    - clang-format --version
+    - clang-format --dry-run --Werror src/*.[ch] unit-test/*.[ch]
+
+copyright:
+  stage: prebuild
+  # The header policy for new files is still open; report without blocking.
+  allow_failure: true
+  script:
+    - |
+      status=0
+      for f in $(find src unit-test -name '*.[ch]' | sort); do
+        if ! grep -q 'Copyright (c)' "$f" ||
+           ! grep -q 'Redistribution and use in source and binary forms' "$f"; then
+          echo "$f: missing copyright notice or BSD-3-Clause text"
+          status=1
+        fi
+      done
+      exit $status
+
+# --- build -------------------------------------------------------------------
+
+build-c:
+  stage: build
+  extends: .build-deps
+  script:
+    - >-
+      cmake -S . -B build -DCMAKE_BUILD_TYPE=$BUILD_TYPE
+      -DCNTD_ENABLE_TESTS=OFF -DCNTD_ENABLE_ACCESS_DAEMON=OFF
+    - cmake --build build -j"$(nproc)"
+
+build-tests:
+  stage: build
+  extends: .build-deps
+  script:
+    - >-
+      cmake -S . -B build -DCMAKE_BUILD_TYPE=$BUILD_TYPE
+      -DCNTD_ENABLE_TESTS=ON -DCNTD_ENABLE_ACCESS_DAEMON=OFF
+    - cmake --build build -j"$(nproc)"
+  artifacts:
+    paths: [build/]
+    expire_in: 1 day
+
+# --- test --------------------------------------------------------------------
+
+test:
+  stage: test
+  extends: .build-deps
+  needs: [build-tests]
+  variables:
+    # Docker jobs run as root, and the container may expose fewer cores than
+    # ranks; the CMA single-copy path is usually blocked inside containers.
+    OMPI_ALLOW_RUN_AS_ROOT: "1"
+    OMPI_ALLOW_RUN_AS_ROOT_CONFIRM: "1"
+    OMPI_MCA_rmaps_base_oversubscribe: "1"
+    OMPI_MCA_btl_vader_single_copy_mechanism: "none"
+  script:
+    - ctest --test-dir build --output-on-failure --output-junit ctest-junit.xml
+  artifacts:
+    when: always
+    reports:
+      junit: build/ctest-junit.xml

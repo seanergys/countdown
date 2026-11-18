@@ -8,4 +8,5 @@ cmake/CMakeFiles/
 *.a
 .*
 !/.gitignore
+!/.gitlab-ci.yml
 !/.editorconfig
