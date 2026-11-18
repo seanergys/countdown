@@ -802,7 +802,7 @@ HIDDEN int read_nom_freq()
 	}
 
 	if (freq == 0) {
-		char driver_name[STRING_SIZE];
+		char driver_name[STRING_SIZE] = "";
 		read_str_from_file(
 			"/sys/devices/system/cpu/cpu0/cpufreq/scaling_driver",
 			driver_name);
@@ -812,7 +812,7 @@ HIDDEN int read_nom_freq()
 			     strlen("intel_pstate")) ||
 		    !strncmp(driver_name, "amd-pstate-epp",
 			     strlen("amd-pstate-epp"))) {
-			char line[STRING_SIZE];
+			char line[STRING_SIZE] = "";
 
 			read_str_from_file(
 				"/sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_max_freq",
@@ -821,13 +821,15 @@ HIDDEN int read_nom_freq()
 			freq /= 1000.0;
 			if (freq % 2)
 				freq -= 1;
-		} else {
-			fprintf(stderr,
-				"Error: <COUNTDOWN-node:%s-rank:%d> Error getting nominal frequency\n",
-				hostname, world_rank);
-			PMPI_Abort(MPI_COMM_WORLD, EXIT_FAILURE);
 		}
 	}
+
+	// The nominal frequency only scales the average-frequency report
+	// columns, so VMs and containers without cpufreq can still run.
+	if (freq == 0 && cntd->rank->local_rank == 0)
+		fprintf(stderr,
+			"Warning: <COUNTDOWN-node:%s-rank:%d> Nominal frequency unavailable, frequency reports will be 0\n",
+			hostname, world_rank);
 
 	// Pulisce la memoria
 	hwloc_topology_destroy(topology);
