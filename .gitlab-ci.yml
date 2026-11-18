@@ -69,15 +69,16 @@ clang-format:
 
 copyright:
   stage: prebuild
-  # The header policy for new files is still open; report without blocking.
-  allow_failure: true
+  # Every C source must start with the same BSD-3-Clause header as src/cntd.h.
+  # CR is stripped because the PMPI wrappers use CRLF line endings.
   script:
     - |
+      sed '/^ \*\/$/q' src/cntd.h > /tmp/header.txt
+      lines=$(wc -l < /tmp/header.txt)
       status=0
       for f in $(find src unit-test -name '*.[ch]' | sort); do
-        if ! grep -q 'Copyright (c)' "$f" ||
-           ! grep -q 'Redistribution and use in source and binary forms' "$f"; then
-          echo "$f: missing copyright notice or BSD-3-Clause text"
+        if ! head -n "$lines" "$f" | tr -d '\r' | cmp -s - /tmp/header.txt; then
+          echo "$f: header differs from the one in src/cntd.h"
           status=1
         fi
       done
