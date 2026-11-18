@@ -18,6 +18,9 @@ changelog, and how releases are made. For build and test instructions, see
 Direct pushes to `main` are possible for maintainers but should stay
 exceptional. Use an MR for code changes and releases.
 
+Every new `.c` or `.h` file must start with the same copyright header as
+`src/cntd.h`; copy it unchanged. CI rejects files whose header differs.
+
 ## MR titles
 
 With squash, `main` receives one commit per MR, and its message is the MR title.
