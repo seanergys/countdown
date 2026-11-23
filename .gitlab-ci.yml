@@ -32,6 +32,11 @@ variables:
     # The runner drops CAP_SETUID/CAP_SETGID, so apt cannot switch to its
     # unprivileged _apt user; downloading as root is fine in a CI container.
     - echo 'APT::Sandbox::User "root";' > /etc/apt/apt.conf.d/99-ci-sandbox
+    # apt waits indefinitely on an unresponsive mirror by default; fail fast
+    # instead of reaching the runner's 10-minute job timeout.
+    - >-
+      printf '%s\n' 'Acquire::Retries "3";' 'Acquire::http::Timeout "30";'
+      > /etc/apt/apt.conf.d/99-ci-network
     - apt-get update -qq
 
 .build-deps:
