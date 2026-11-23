@@ -37,6 +37,16 @@ variables:
     - >-
       printf '%s\n' 'Acquire::Retries "3";' 'Acquire::http::Timeout "30";'
       > /etc/apt/apt.conf.d/99-ci-network
+    # archive.ubuntu.com is often slow from the runners. Without priorities,
+    # apt picks mirrors in random order.
+    - >-
+      printf '%s\tpriority:%s\n'
+      http://ubuntu.mirror.garr.it/ubuntu/ 1
+      http://archive.ubuntu.com/ubuntu/ 2
+      > /etc/apt/ci-mirrors.txt
+    - >-
+      sed -i 's|^URIs: .*|URIs: mirror+file:/etc/apt/ci-mirrors.txt|'
+      /etc/apt/sources.list.d/ubuntu.sources
     - apt-get update -qq
 
 .build-deps:
