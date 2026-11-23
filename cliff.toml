@@ -30,7 +30,7 @@ body = """
 # A Tera template to be rendered as the changelog's footer.
 # See https://keats.github.io/tera/#getting-started
 footer = """
-{% set repo_url = "https://gitlab.hpc.cineca.it/waldo/countdown-seanergys" -%}
+{% set repo_url = "https://gitlab.seanergys.fz-juelich.de/software/countdown" -%}
 {% for release in releases -%}
     {% if release.version and release.previous and release.previous.version -%}
         [{{ release.version | trim_start_matches(pat="v") }}]: \
@@ -62,9 +62,12 @@ commit_preprocessors = [
   { pattern = "^(\\w+)\\(ad\\)", replace = "${1}(access-daemon)" },
 ]
 commit_parsers = [
-  # "remove meric" predates the Conventional Commits convention and drops a
-  # public feature, so it is classified as breaking by its hash.
+  # These commits predate the Conventional Commits convention, so they are
+  # classified by their hash: "remove meric" drops a public feature (breaking);
+  # the Access Daemon backend and the EasyBUS integration add functionality.
   { sha = "d81960e6163f82fee0f2a5387cecf8c8e7d594a8", group = "<!-- 0 -->Breaking" },
+  { sha = "55fd56466bdf18c5eb7e7bf596c8b3e0df6ae1c6", group = "<!-- 1 -->Added" },
+  { sha = "f0fde1f82b5e5c39c8d259dc1f76ea4d6a509cb5", group = "<!-- 1 -->Added" },
   { message = "^[mM]erge branch", skip = true },
   { field = "breaking", pattern = "true", group = "<!-- 0 -->Breaking" },
   { body = ".*[sS]ecurity", group = "<!-- 6 -->Security" },

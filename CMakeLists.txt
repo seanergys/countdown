@@ -30,7 +30,7 @@ cmake_minimum_required(VERSION 3.0)
 
 project(
   libcntd
-  VERSION 2.0
+  VERSION 2.0.0
   DESCRIPTION
     "COUNTDOWN: A Run-time Library for Application-agnostic Energy Saving in \
 MPI Communication Primitives"
