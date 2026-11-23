@@ -32,6 +32,10 @@
 #include "cntd.h"
 #include <stdlib.h>
 
+#if (defined INTEL || defined AMD)
+#include "x86_64.h"
+#endif
+
 #ifdef INTEL
 HIDDEN uint64_t read_msr(int offset)
 {
@@ -79,25 +83,7 @@ HIDDEN void set_freq(int freq_khz)
 {
 	if (!cntd->enable_eam_analysis) {
 		if (cntd->use_access_daemon) {
-			/*
-			 * The Access Daemon owns the knob, so COUNTDOWN only
-			 * asks for the frequency of the CPU this rank runs on.
-			 *
-			 * TODO: move blocking AD calls out of signal handlers
-			 * and disable interventions instead of aborting on
-			 * runtime AD failures.
-			 */
-			if (access_daemon_set_cpu_freq_limit(
-				    cntd->rank->cpu_id, (uint64_t)freq_khz) <
-			    0) {
-				fprintf(stderr,
-					"Error: <COUNTDOWN-node:%s-rank:%d> Failed to set the frequency of CPU %d through the Access Daemon: %s\n",
-					cntd->node.hostname,
-					cntd->rank->world_rank,
-					cntd->rank->cpu_id,
-					access_daemon_last_error());
-				PMPI_Abort(MPI_COMM_WORLD, EXIT_FAILURE);
-			}
+			ad_backend_request_freq(freq_khz);
 		} else if (cntd->use_cpufreq) {
 			if (cntd->userspace_governor) {
 				if (pwrite(cntd->scaling_setspeed_fd, &freq_khz,
@@ -209,43 +195,42 @@ HIDDEN void set_sys_min_freq()
 
 HIDDEN int get_maximum_turbo_frequency()
 {
-	int world_rank, max_pstate;
+	int world_rank;
 	char hostname[STRING_SIZE];
 
 	gethostname(hostname, sizeof(hostname));
 	PMPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
 
-	if (!cntd->enable_eam_analysis) {
 #ifdef INTEL
-		// With the Access Daemon the MSRs are not opened, so the
-		// capability is read from cpufreq instead
-		if (!cntd->use_cpufreq && !cntd->use_access_daemon) {
-			int offset = MSR_TURBO_RATIO_LIMIT;
-			if (cntd->hwp_usage)
-				offset = IA32_HWP_CAPABILITIES;
-			max_pstate = (int)(read_msr(offset) & 0xFF);
+	// Analysis and Access Daemon paths do not open the MSRs.
+	if (!cntd->enable_eam_analysis && !cntd->use_cpufreq &&
+	    !cntd->use_access_daemon) {
+		int offset = MSR_TURBO_RATIO_LIMIT;
+		int max_pstate;
+		if (cntd->hwp_usage)
+			offset = IA32_HWP_CAPABILITIES;
+		max_pstate = (int)(read_msr(offset) & 0xFF);
 
-			return max_pstate * 1.0E5;
-		}
-#endif
-		char max_freq_value[STRING_SIZE];
-
-		char filename[STRING_SIZE];
-		if (cntd->userspace_governor)
-			snprintf(filename, STRING_SIZE, SCALING_SETSPEED,
-				 cntd->rank->cpu_id);
-		else
-			snprintf(filename, STRING_SIZE, CPUINFO_MAX_FREQ);
-		if (read_str_from_file(filename, max_freq_value) < 0) {
-			fprintf(stderr,
-				"Error: <COUNTDOWN-node:%s-rank:%d> Failed to read file: %s\n",
-				hostname, world_rank, CPUINFO_MAX_FREQ);
-			PMPI_Abort(MPI_COMM_WORLD, EXIT_FAILURE);
-		}
-
-		long int max_freq = strtol(max_freq_value, NULL, 10);
-		return (int)max_freq;
+		return max_pstate * 1.0E5;
 	}
+#endif
+	char max_freq_value[STRING_SIZE];
+
+	char filename[STRING_SIZE];
+	if (cntd->userspace_governor)
+		snprintf(filename, STRING_SIZE, SCALING_SETSPEED,
+			 cntd->rank->cpu_id);
+	else
+		snprintf(filename, STRING_SIZE, CPUINFO_MAX_FREQ);
+	if (read_str_from_file(filename, max_freq_value) < 0) {
+		fprintf(stderr,
+			"Error: <COUNTDOWN-node:%s-rank:%d> Failed to read file: %s\n",
+			hostname, world_rank, CPUINFO_MAX_FREQ);
+		PMPI_Abort(MPI_COMM_WORLD, EXIT_FAILURE);
+	}
+
+	long int max_freq = strtol(max_freq_value, NULL, 10);
+	return (int)max_freq;
 }
 
 HIDDEN int get_minimum_frequency()
@@ -337,10 +322,10 @@ HIDDEN void pm_init()
 
 HIDDEN void pm_finalize()
 {
-	set_sys_max_freq();
-
 	if (cntd->use_access_daemon)
 		return;
+
+	set_sys_max_freq();
 
 #if (defined INTEL || defined AMD)
 	if (!cntd->use_cpufreq)

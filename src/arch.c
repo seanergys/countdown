@@ -32,6 +32,8 @@
 #include "cntd.h"
 
 #if (defined INTEL || defined AMD)
+#include "x86_64.h"
+
 HIDDEN void init_rapl()
 {
 	int i, j, world_rank;

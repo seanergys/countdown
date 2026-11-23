@@ -51,11 +51,6 @@
 #include <asm/unistd.h>
 #include <linux/perf_event.h>
 #include <sys/file.h> // for \"flock\".
-#include <math.h> // for \"ceil\".
-#include "cntd_common.h"
-
-// TABLE
-#include "fort.h"
 
 // MPI
 #include <mpi.h>
@@ -67,8 +62,6 @@
 #include "common_def.h"
 // CNTD MPI Definitions
 #include "cntd_mpi_def.h"
-// SEANERGYS Access Daemon client
-#include "access_daemon.h"
 
 // General configurations
 #define MAX_SAMPLING_TIME_REPORT 600 // 600 seconds (10 min)
@@ -169,9 +162,7 @@
 #define SCALING_SETSPEED \
 	"/sys/devices/system/cpu/cpu%u/cpufreq/scaling_setspeed"
 
-#if (defined INTEL || defined AMD)
-#include "x86_64.h"
-#elif POWER9
+#if defined(POWER9)
 #include "power9.h"
 #elif THUNDERX2
 #include "thunderx2.h"
@@ -332,6 +323,13 @@ typedef struct {
 extern CNTD_t *cntd;
 
 // HEADERS
+// ad_backend.c
+void ad_backend_start();
+void ad_backend_stop();
+void ad_backend_set_cpu(int cpu);
+void ad_backend_request_freq(int freq_khz);
+int ad_backend_read_socket_power(uint64_t watts[MAX_NUM_SOCKETS]);
+double ad_backend_sample_age();
 // arch.c
 void get_access(int var);
 void release_access(int var);
