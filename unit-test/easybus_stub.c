@@ -87,12 +87,16 @@ static int set_gate_completed;
 static sem_t completed_gets;
 
 static const char *const domain_names[] = { [Met] = "Met", [Act] = "Act" };
-static const char *const metric_names[] = { [Power] = "Power",
-					    [Energy] = "Energy",
-					    [Freq] = "Freq" };
-static const char *const device_names[] = { [Cpu] = "Cpu",
-					    [Core] = "Core",
-					    [Socket] = "Socket" };
+static const char *const metric_names[] = {
+	[Power] = "Power",
+	[Energy] = "Energy",
+	[Freq] = "Freq",
+};
+static const char *const device_names[] = {
+	[Cpu] = "Cpu",
+	[Core] = "Core",
+	[Socket] = "Socket",
+};
 
 #define NAME(names, value) \
 	name_of(names, sizeof(names) / sizeof(names[0]), (int)(value))

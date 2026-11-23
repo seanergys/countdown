@@ -24,6 +24,8 @@ default:
 variables:
   DEBIAN_FRONTEND: noninteractive
   BUILD_TYPE: Release
+  # Exact version: other releases format some constructs differently.
+  CLANG_FORMAT_VERSION: "23.1.5"
 
 .apt-setup:
   before_script:
@@ -60,9 +62,9 @@ mr-title:
 
 clang-format:
   stage: prebuild
+  image: python:3.12-slim
   before_script:
-    - !reference [.apt-setup, before_script]
-    - apt-get install -y -qq --no-install-recommends clang-format > /dev/null
+    - pip install --quiet --root-user-action=ignore "clang-format==$CLANG_FORMAT_VERSION"
   script:
     - clang-format --version
     - clang-format --dry-run --Werror src/*.[ch] unit-test/*.[ch]

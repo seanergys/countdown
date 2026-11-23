@@ -21,6 +21,17 @@ exceptional. Use an MR for code changes and releases.
 Every new `.c` or `.h` file must start with the same copyright header as
 `src/cntd.h`; copy it unchanged. CI rejects files whose header differs.
 
+Format C sources with clang-format 23.1.5, the exact version CI uses. Other
+versions format some constructs differently, so do not rely on the one your
+distribution provides. To run the pinned version without installing it:
+
+```sh
+uvx clang-format@23.1.5 -i src/*.[ch] unit-test/*.[ch]
+```
+
+When you change the version, update `CLANG_FORMAT_VERSION` in `.gitlab-ci.yml`
+and this section in the same MR, and reformat all sources.
+
 ## MR titles
 
 With squash, `main` receives one commit per MR, and its message is the MR title.
