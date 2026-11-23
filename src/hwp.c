@@ -29,9 +29,10 @@
  *POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "cntd.h"
-
 #ifdef HWP_AVAIL
+#include "cntd.h"
+#include "x86_64.h"
+
 // Max "Energy_Performance_Preference".
 HIDDEN void set_max_epp()
 {

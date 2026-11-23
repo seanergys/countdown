@@ -1,6 +1,9 @@
 <img src="./logo/rgb-cmyk.svg" width="400" valign="middle" alt="COUNTDOWN logo"/>
 
-# COUNTDOWN - A Run-time Library for Application-agnostic Energy Saving in MPI Communication Primitives
+# COUNTDOWN
+
+A Run-time Library for Application-agnostic Energy Saving in MPI Communication
+Primitives
 
 ## DISCLAIMER
 
@@ -101,18 +104,21 @@ perf counters, Access Daemon use and EAM/EAM Slack actuation, irrespective of
 the invoking shell's settings. They need no privileged hardware access, but
 still use the machine's read-only topology/nominal-frequency discovery. Tests
 run serially because COUNTDOWN's shared-memory names are job/user-scoped; do not
-run another COUNTDOWN job with the same job/user identity concurrently.
+run another COUNTDOWN job with the same job/user identity concurrently. An
+AD-enabled build adds baseline tests that use an EasyBUS stub; see
+[Access Daemon backend](#access-daemon-backend).
 
 ### Access Daemon backend
 
 `CNTD_ENABLE_ACCESS_DAEMON=ON` talks to the Access Daemon through its EasyBUS
 library (`libaccess_easybus`), built against the current SeanerBUS **Entity** C
-API. Install the Access Daemon (`make install PREFIX=... SEABUS_PREFIX=...`) and
-pass both prefixes. Access Daemon installs its headers under `include/accessd`
-and libraries under `lib/accessd`. The previous flat layout is also supported.
-COUNTDOWN adds the library directories to the RPATH, so no `LD_LIBRARY_PATH` is
-needed. Use a fresh build directory after changing the installation layout or
-prefix to avoid cached paths:
+API. This backend requires C11 and POSIX threads. Install the Access Daemon
+(`make install PREFIX=... SEABUS_PREFIX=...`) and pass both prefixes. Access
+Daemon installs its headers under `include/accessd` and libraries under
+`lib/accessd`. The previous flat layout is also supported. COUNTDOWN adds the
+library directories to the RPATH, so no `LD_LIBRARY_PATH` is needed. Use a fresh
+build directory after changing the installation layout or prefix to avoid cached
+paths:
 
     cmake -S . -B build -DCNTD_ENABLE_ACCESS_DAEMON=ON \
         -DEASYBUS_PREFIX="$HOME/opt/access-daemon" \
@@ -120,8 +126,35 @@ prefix to avoid cached paths:
     cmake --build build
     ctest --test-dir build -L baseline --output-on-failure
 
-An AD-enabled build does not enable daemon use in these baseline tests. They
-establish MPI startup, sampling and reporting only.
+An AD-enabled build also runs the baseline with an EasyBUS stub
+(`unit-test/easybus_stub.c`) preloaded ahead of `libcntd.so`. COUNTDOWN then
+takes the Access Daemon path without a broker or daemon:
+
+- `Baseline-AD-stub-2-ranks` enables EAM and the power monitor. Each rank must
+  use one worker for all EasyBUS calls and restore the system maximum frequency.
+  The node master must read the socket power at least twice.
+- `Baseline-AD-stub-get-failure` makes every socket-power GET fail. COUNTDOWN
+  must report the daemon's error and finish the run.
+- `Baseline-AD-stub-set-failure` makes every CPU-frequency SET fail. COUNTDOWN
+  must report the first failure once, send no further runtime SET, try one
+  restore at shutdown, keep polling socket power, and finish the run.
+- `Baseline-AD-worker-mailbox` holds a SET while MPI calls post frequency
+  requests. The worker must apply the latest pending frequency.
+- `Baseline-AD-worker-signals` exercises the frequency and sampling signal
+  handlers while a SET is held.
+- `Baseline-AD-worker-monitor-only` checks that monitoring alone sends no
+  frequency requests.
+
+The stub writes one line to stderr for each EasyBUS call, for example
+`easybus-stub[4242]: set Freq/Cpu dev=1 value=400000 -> ok`. To see them, run:
+
+    ctest --test-dir build -R '^Baseline-AD-' -V
+
+With EAM enabled, COUNTDOWN reads CPU 0's `cpuinfo_min_freq` and
+`cpuinfo_max_freq` from cpufreq sysfs and aborts if it cannot, so these tests
+need a machine with cpufreq. The stub also reads `CNTD_EASYBUS_STUB_FAIL` (`get`
+and/or `set`) to inject failures and `CNTD_EASYBUS_STUB_DELAY_US` to delay each
+GET and SET.
 
 EasyBUS discovers endpoints for the local hostname. Sensor endpoints carry
 `Domain`, `Metric`, `Device` and `Device_no` labels. For example:
@@ -132,12 +165,13 @@ EasyBUS discovers endpoints for the local hostname. Sensor endpoints carry
 | Socket 0 power  | `Metric` | `Power` | `Socket` | `0`       |
 
 The initial EasyBUS integration provides CPU-frequency GET and SET through
-`src/access_daemon.h`. GET reads `Metric/Freq/Cpu` in kHz. SET targets
-`Actuator/Freq/Cpu`, for one CPU or the same value on every CPU. The initial
-release supports the daemon's `act.cpu_freq.driver_pstate.so` backend, which
-sets a maximum frequency. Load only that CPU-frequency actuator for this
-integration. A successful SET confirms the daemon operation, not that the
-measured frequency equals the requested value.
+`src/access_daemon.h`. Inside `libcntd.so`, only `src/ad_backend.c` calls this
+adapter. GET reads `Metric/Freq/Cpu` in kHz. SET targets `Actuator/Freq/Cpu`,
+for one CPU or the same value on every CPU. The initial release supports the
+daemon's `act.cpu_freq.driver_pstate.so` backend, which sets a maximum
+frequency. Load only that CPU-frequency actuator for this integration. A
+successful SET confirms the daemon operation, not that the measured frequency
+equals the requested value.
 
 The adapter uses the split EasyBUS API (`easybus_request_get` and
 `easybus_request_set_imm`) from Access Daemon `main` (`13406fb` or later) and
@@ -151,10 +185,32 @@ successful SET does not yet change the limit. Multi-CPU SET is non-atomic:
 failure can leave some settings changed, and COUNTDOWN does not retry or roll
 them back.
 
-This stage targets serialized standalone calls. Live SET/read-back validation is
-pending. Moving blocking AD calls out of MPI runtime signal handlers, runtime
-failure handling, and restoration of pre-run settings are separate work. EasyBUS
-timeout/reconnect cleanup also remains incomplete. Do not treat this integration
+With the Access Daemon enabled, each MPI rank has a worker that owns its EasyBUS
+connection. Each worker connects before initialization completes. If power
+monitoring is enabled, the node master's worker also reads the first
+socket-power sample before initialization completes. Frequency requests replace
+any older pending request. The node master's worker polls socket power at the
+configured sampling interval, and the sampling handler reads the latest cached
+value when available. A slow daemon can make that value stale. The backend
+records the age of the last consumed sample internally, but does not include it
+in reports.
+
+On normal shutdown, the worker applies the last pending frequency and restores
+the system maximum if EAM or EAM Slack is enabled outside analysis mode. It then
+disconnects and joins. This does not restore the pre-run frequency limit. A
+failed power GET is logged and leaves the sample unavailable until a later
+successful poll.
+
+A runtime AD failure does not stop the application. After a failed SET,
+COUNTDOWN logs the error once, ignores later frequency requests, and keeps
+polling socket power. A SET that fails or times out may still have changed the
+limit, so shutdown still tries to restore the system maximum and logs a failed
+restore. If the worker cannot be woken, COUNTDOWN logs the error and stops
+both frequency control and power monitoring. In all these cases the
+application runs to completion and COUNTDOWN writes its report.
+
+Live SET/read-back validation, pre-run limit restoration, and EasyBUS
+timeout/reconnect cleanup remain separate work. Do not treat this integration
 as a validated automatic MPI frequency policy.
 
 To enable the backend for an instrumented application, set

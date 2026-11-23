@@ -109,17 +109,10 @@ static void read_env()
 	 * Daemon instead of driving MSRs and cpufreq directly.
 	 */
 	char *cntd_use_access_daemon = getenv("CNTD_USE_ACCESS_DAEMON");
-	if (str_to_bool(cntd_use_access_daemon)) {
-		if (!access_daemon_is_enabled()) {
-			fprintf(stderr,
-				"Error: <COUNTDOWN-node:%s-rank:%d> CNTD_USE_ACCESS_DAEMON is set but COUNTDOWN was built without Access Daemon support, rebuild with -DCNTD_ENABLE_ACCESS_DAEMON=ON\n",
-				hostname, world_rank);
-			PMPI_Abort(MPI_COMM_WORLD, EXIT_FAILURE);
-		}
+	if (str_to_bool(cntd_use_access_daemon))
 		cntd->use_access_daemon = TRUE;
-	} else {
+	else
 		cntd->use_access_daemon = FALSE;
-	}
 
 	// Timeout value for COUNTDOWN timer
 	char *timeout_str = getenv("CNTD_TIMEOUT");
@@ -316,13 +309,8 @@ HIDDEN void start_cntd()
 	read_env();
 
 	// Connect to the Access Daemon before anything may query the hardware
-	if (cntd->use_access_daemon && access_daemon_init() < 0) {
-		fprintf(stderr,
-			"Error: <COUNTDOWN-node:%s-rank:%d> Failed to connect to the Access Daemon: %s\n",
-			cntd->node.hostname, cntd->rank->world_rank,
-			access_daemon_last_error());
-		PMPI_Abort(MPI_COMM_WORLD, EXIT_FAILURE);
-	}
+	if (cntd->use_access_daemon)
+		ad_backend_start();
 
 	// Init PM
 	if (cntd->enable_eam || cntd->enable_eam_slack) {
@@ -334,6 +322,8 @@ HIDDEN void start_cntd()
 
 	// Read architecture configuration + get pid + get cpu id
 	init_arch_conf();
+	if (cntd->use_access_daemon)
+		ad_backend_set_cpu(cntd->rank->cpu_id);
 
 #ifdef MOSQUITTO_ENABLED
 	if (cntd->iam_master) {
@@ -374,8 +364,6 @@ HIDDEN void stop_cntd()
 
 	if (cntd->enable_eam || cntd->enable_eam_slack) {
 		if (!cntd->enable_eam_analysis) {
-			// With the Access Daemon the restore is a frequency
-			// request like any other, issued by pm_finalize()
 			if (cntd->use_cpufreq && !cntd->use_access_daemon) {
 				if (!cntd->userspace_governor) {
 					char filename[STRING_SIZE];
@@ -405,7 +393,7 @@ HIDDEN void stop_cntd()
 	finalize_cpufreq();
 
 	if (cntd->use_access_daemon)
-		access_daemon_finalize();
+		ad_backend_stop();
 
 	print_final_report();
 

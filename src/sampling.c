@@ -30,9 +30,10 @@
  */
 
 #include "cntd.h"
+#include "cntd_common.h"
 
-#ifndef __INTEL_COMPILER
-#include <math.h>
+#if (defined INTEL || defined AMD)
+#include "x86_64.h"
 #endif
 
 #ifdef INTEL
@@ -244,23 +245,19 @@ static int read_sys_energy_access_daemon(double *energy_sys,
 					 double energy_pkg[MAX_NUM_SOCKETS],
 					 double energy_dram[MAX_NUM_SOCKETS])
 {
-	access_daemon_values_t power = { 0 };
-	int i;
+	uint64_t power_w[MAX_NUM_SOCKETS];
+	int count, i;
 
 	*energy_sys = 0.0;
 
-	if (access_daemon_get_socket_power(ACCESS_DAEMON_DEV_ALL, &power) < 0) {
-		fprintf(stderr,
-			"Error: <COUNTDOWN-node:%s-rank:%d> Failed to read the socket power through the Access Daemon: %s\n",
-			cntd->node.hostname, cntd->rank->world_rank,
-			access_daemon_last_error());
+	count = ad_backend_read_socket_power(power_w);
+	if (count < 0)
 		return -1;
-	}
 
 	for (i = 0; i < cntd->node.num_sockets; i++) {
-		energy_pkg[i] = i < power.count ? (double)power.values[i] *
-							  cntd->sampling_time :
-						  0.0;
+		energy_pkg[i] =
+			i < count ? (double)power_w[i] * cntd->sampling_time :
+				    0.0;
 		energy_dram[i] = 0.0;
 	}
 

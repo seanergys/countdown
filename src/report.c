@@ -30,6 +30,12 @@
  */
 
 #include "cntd.h"
+#include "fort.h"
+#include <math.h>
+
+#if (defined INTEL || defined AMD)
+#include "x86_64.h"
+#endif
 
 static FILE *timeseries_fd;
 

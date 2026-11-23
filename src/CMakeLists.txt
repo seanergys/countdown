@@ -31,6 +31,7 @@
 set(
   SOURCES
   access_daemon.c
+  ad_backend.c
   arch.c
   cpufreq.c
   init.c
@@ -99,8 +100,10 @@ endif()
 # SEANERGYS Access Daemon
 # # # # # # # # # # # # # ##############################################
 if(CNTD_ENABLE_ACCESS_DAEMON)
+  find_package(Threads REQUIRED)
+  target_compile_features(cntd PRIVATE c_std_11)
   target_compile_definitions(cntd PRIVATE "ACCESS_DAEMON_ENABLED")
-  target_link_libraries(cntd PRIVATE cntd_easybus)
+  target_link_libraries(cntd PRIVATE cntd_easybus Threads::Threads)
 endif()
 
 if(CNTD_DISABLE_ALL_MPI_EXCEPT_INI_FIN)
